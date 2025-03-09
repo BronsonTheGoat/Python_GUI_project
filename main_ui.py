@@ -30,6 +30,10 @@ class Ui_mainWindow(object):
         self.actionLogin.setObjectName(u"actionLogin")
         self.actionExit = QAction(mainWindow)
         self.actionExit.setObjectName(u"actionExit")
+        self.actionAdd_modify_book = QAction(mainWindow)
+        self.actionAdd_modify_book.setObjectName(u"actionAdd_modify_book")
+        self.actionDashboard = QAction(mainWindow)
+        self.actionDashboard.setObjectName(u"actionDashboard")
         self.centralwidget = QWidget(mainWindow)
         self.centralwidget.setObjectName(u"centralwidget")
         self.stackedWidget = QStackedWidget(self.centralwidget)
@@ -81,12 +85,13 @@ class Ui_mainWindow(object):
 
         self.menubar.addAction(self.menuFIle.menuAction())
         self.menuFIle.addAction(self.actionLogin)
+        self.menuFIle.addAction(self.actionDashboard)
         self.menuFIle.addSeparator()
         self.menuFIle.addAction(self.actionExit)
 
         self.retranslateUi(mainWindow)
 
-        self.stackedWidget.setCurrentIndex(1)
+        self.stackedWidget.setCurrentIndex(0)
 
 
         QMetaObject.connectSlotsByName(mainWindow)
@@ -96,6 +101,8 @@ class Ui_mainWindow(object):
         mainWindow.setWindowTitle(QCoreApplication.translate("mainWindow", u"Library app", None))
         self.actionLogin.setText(QCoreApplication.translate("mainWindow", u"Login", None))
         self.actionExit.setText(QCoreApplication.translate("mainWindow", u"Exit", None))
+        self.actionAdd_modify_book.setText(QCoreApplication.translate("mainWindow", u"Add/modify book", None))
+        self.actionDashboard.setText(QCoreApplication.translate("mainWindow", u"Dashboard", None))
         self.backgroundLabel.setText("")
         self.timeLabel.setText(QCoreApplication.translate("mainWindow", u"2025.03.08. 20:01:25", None))
         self.titleLabel.setText(QCoreApplication.translate("mainWindow", u"Library app", None))
