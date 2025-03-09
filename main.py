@@ -117,7 +117,7 @@ class LibraryApp(QMainWindow):
 if __name__ == "__main__":
     app = QApplication([])
 
-    if not create_connection('QSQLITE'):
+    if not create_connection('QSQLITE', "library"):
         sys.exit(1)
 
     window = LibraryApp()
