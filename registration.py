@@ -8,7 +8,7 @@ import hashlib
 from clikc_label import ClickableLabel
 from sqlconnector import create_connection
 
-class LoginDialog(QDialog):
+class RegistrationDialog(QDialog):
     settings_saved = pyqtSignal(dict)
     
     script_directory = os.path.dirname(os.path.abspath(sys.argv[0]))
@@ -27,7 +27,7 @@ class LoginDialog(QDialog):
         self.hide_icon = QPixmap(f"{self.script_directory}/assets/hidden.png")
         self.show_icon = QPixmap(f"{self.script_directory}/assets/eye.png")
 
-        self.setWindowTitle("Login/Register")
+        self.setWindowTitle("Registration")
 
         self.mian_layout = QFormLayout(self)
 
