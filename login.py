@@ -64,7 +64,9 @@ class LoginDialog(QDialog):
 
     # Methods
     def login_user(self) -> list:
-        print("Query from database...")
+        if self.username_input.text() == "" or self.password_input.text() == "":
+            QMessageBox.information(self, "Empty fields", "Username or password field is empty!")
+            return []
         query = QSqlQuery(self.db)
         query.prepare("SELECT * FROM users WHERE username = ? AND password = ?")
         query.addBindValue(f'{self.username_input.text()}')
