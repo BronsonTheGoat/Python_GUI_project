@@ -1,10 +1,22 @@
-from PyQt6.QtWidgets import QApplication, QDialog, QFormLayout, QHBoxLayout, QLineEdit, QLabel, QPushButton
-from PyQt6.QtGui import QRegularExpressionValidator, QCursor, QPalette, QColor, QPixmap, QIcon
-from PyQt6.QtCore import pyqtSignal
+from PyQt6.QtWidgets import QApplication, QDialog, QFormLayout, QHBoxLayout, QLineEdit, QLabel, QPushButton, QMessageBox
+from PyQt6.QtGui import QCursor, QPixmap, QIcon
+from PyQt6.QtCore import pyqtSignal, Qt
 from PyQt6.QtSql import QSqlDatabase, QSqlQuery
 import os
 import sys
+import hashlib
 from sqlconnector import create_connection
+
+class ClickableLabel(QLabel):
+    clicked_signal = pyqtSignal()
+    
+    def __init__(self, text="", parent=None):
+        super().__init__(text, parent)
+        self.setStyleSheet("""ClickableLabel{color: blue; text-decoration: underline;}""")
+        self.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+        
+    def mousePressEvent(self, event):
+        self.clicked_signal.emit()
 
 class LoginDialog(QDialog):
     settings_saved = pyqtSignal(dict)
@@ -25,9 +37,9 @@ class LoginDialog(QDialog):
         self.hide_icon = QPixmap(f"{self.script_directory}/assets/hidden.png")
         self.show_icon = QPixmap(f"{self.script_directory}/assets/eye.png")
 
-        self.setWindowTitle("Login")
+        self.setWindowTitle("Login/Register")
 
-        self.layout = QFormLayout(self)
+        self.mian_layout = QFormLayout(self)
 
         self.username_input = QLineEdit(self)
         self.username_input.setPlaceholderText("Username")
@@ -37,21 +49,31 @@ class LoginDialog(QDialog):
         
         self.show_password_button = QPushButton(self)
         self.show_password_button.setIcon(QIcon(self.show_icon))
+        self.show_password_button.setAutoDefault(False)
         self.show_password_button.clicked.connect(self.show_password)
         
         password_layout = QHBoxLayout()
         password_layout.addWidget(self.password_input)
         password_layout.addWidget(self.show_password_button)
 
-        self.layout.addRow(self.username_input)
-        self.layout.addRow(self.password_input, self.show_password_button)
-
         login_button = QPushButton("Login", self)
         login_button.clicked.connect(self.login_user)
-        self.layout.addWidget(login_button)
+        
+        label = QLabel("Don't have an account?")
+        label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        
+        to_reg_form = ClickableLabel("Create account")
+        to_reg_form.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        to_reg_form.clicked_signal.connect(self.show_register)
+
+        self.mian_layout.addRow(self.username_input)
+        self.mian_layout.addRow(self.password_input, self.show_password_button)
+        self.mian_layout.addRow(login_button)
+        self.mian_layout.addRow(label)
+        self.mian_layout.addRow(to_reg_form)
 
     # Methods
-    def login_user(self):
+    def login_user(self) -> list:
         print("Query from database...")
         query = QSqlQuery(self.db)
         query.prepare("SELECT * FROM users WHERE username = ? AND password = ?")
@@ -62,14 +84,17 @@ class LoginDialog(QDialog):
         if query.exec():
             while query.next():
                 print(query.value(1))
-                user_id = query.value(0)
                 name = query.value(1)
-                users.append((user_id, name))
+                auth = query.value(7)
+                users.append((name, auth))
         else:
             print("Error fetching users:", query.lastError().text())
-
-        print(users)
-        return users
+            
+        if users == []:
+            QMessageBox.warning(self, "Warning", "Non existing user or wrong password")
+        else:
+            print(users)
+            return users
         
     def show_password(self) -> None:
         if self.password_input.echoMode() == QLineEdit.EchoMode.Normal:
@@ -78,6 +103,9 @@ class LoginDialog(QDialog):
         else:
             self.password_input.setEchoMode(QLineEdit.EchoMode.Normal)
             self.show_password_button.setIcon(QIcon(self.hide_icon))
+            
+    def show_register(self):
+        print("Go to registration form")
 
 
 if __name__ == "__main__":
