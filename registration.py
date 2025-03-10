@@ -5,8 +5,8 @@ from PyQt6.QtSql import QSqlDatabase, QSqlQuery
 import os
 import sys
 import hashlib
-from sqlconnector import create_connection
 from clikc_label import ClickableLabel
+from sqlconnector import create_connection
 
 class LoginDialog(QDialog):
     settings_saved = pyqtSignal(dict)
