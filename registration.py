@@ -30,9 +30,13 @@ class RegistrationDialog(QDialog):
         self.setWindowTitle("Registration")
 
         self.mian_layout = QFormLayout(self)
+        
+        self.name_input = QLineEdit(self)
+        self.name_input.setPlaceholderText("Name")
 
         self.username_input = QLineEdit(self)
         self.username_input.setPlaceholderText("Username")
+        
         self.password_input = QLineEdit(self)
         self.password_input.setPlaceholderText("Password")
         self.password_input.setEchoMode(QLineEdit.EchoMode.Password)
@@ -40,30 +44,55 @@ class RegistrationDialog(QDialog):
         self.show_password_button = QPushButton(self)
         self.show_password_button.setIcon(QIcon(self.show_icon))
         self.show_password_button.setAutoDefault(False)
-        self.show_password_button.clicked.connect(self.show_password)
+        self.show_password_button.clicked.connect(lambda: self.show_password(self.password_input))
+        
+        self.password_2_input = QLineEdit(self)
+        self.password_2_input.setPlaceholderText("Repeat password")
+        self.password_2_input.setEchoMode(QLineEdit.EchoMode.Password)
+        
+        self.show_password_2_button = QPushButton(self)
+        self.show_password_2_button.setIcon(QIcon(self.show_icon))
+        self.show_password_2_button.setAutoDefault(False)
+        self.show_password_2_button.clicked.connect(lambda: self.show_password(self.password_2_input))
         
         password_layout = QHBoxLayout()
-        password_layout.addWidget(self.password_input)
-        password_layout.addWidget(self.show_password_button)
-
-        login_button = QPushButton("Login", self)
-        login_button.clicked.connect(self.login_user)
+        password_layout.addWidget(self.password_2_input)
+        password_layout.addWidget(self.show_password_2_button)
         
-        label = QLabel("Don't have an account?")
+        # TODO: brth date as date edit
+        
+        self.email_input = QLineEdit(self)
+        self.email_input.setPlaceholderText("Email")
+        
+        self.phone_input = QLineEdit(self)
+        self.phone_input.setPlaceholderText("Phone")
+        
+        self.birth_input = QLineEdit(self)
+        self.birth_input.setPlaceholderText("Birth")
+
+        login_button = QPushButton("Create account", self)
+        login_button.clicked.connect(self.create_user)
+        
+        label = QLabel("Already have an account??")
         label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         
-        to_reg_form = ClickableLabel("Create account")
+        to_reg_form = ClickableLabel("Login")
         to_reg_form.setAlignment(Qt.AlignmentFlag.AlignCenter)
         to_reg_form.clicked_signal.connect(self.show_register)
 
+        self.mian_layout.addRow(self.name_input)
         self.mian_layout.addRow(self.username_input)
         self.mian_layout.addRow(self.password_input, self.show_password_button)
+        self.mian_layout.addRow(self.password_2_input, self.show_password_2_button)
+        self.mian_layout.addRow(self.email_input)
+        self.mian_layout.addRow(self.phone_input)
+        self.mian_layout.addRow(self.birth_input)
         self.mian_layout.addRow(login_button)
         self.mian_layout.addRow(label)
         self.mian_layout.addRow(to_reg_form)
 
     # Methods
-    def login_user(self) -> list:
+    def create_user(self) -> list:
         print("Query from database...")
         query = QSqlQuery(self.db)
         query.prepare("SELECT * FROM users WHERE username = ? AND password = ?")
@@ -86,20 +115,20 @@ class RegistrationDialog(QDialog):
             print(users)
             return users
         
-    def show_password(self) -> None:
-        if self.password_input.echoMode() == QLineEdit.EchoMode.Normal:
-            self.password_input.setEchoMode(QLineEdit.EchoMode.Password)
-            self.show_password_button.setIcon(QIcon(self.show_icon))
+    def show_password(self, widget) -> None:
+        if widget.echoMode() == QLineEdit.EchoMode.Normal:
+            widget.setEchoMode(QLineEdit.EchoMode.Password)
+            self.sender().setIcon(QIcon(self.show_icon))
         else:
-            self.password_input.setEchoMode(QLineEdit.EchoMode.Normal)
-            self.show_password_button.setIcon(QIcon(self.hide_icon))
+            widget.setEchoMode(QLineEdit.EchoMode.Normal)
+            self.sender().setIcon(QIcon(self.hide_icon))
             
     def show_register(self):
-        print("Go to registration form")
+        print("Go to login - it will mean to close this dialog")
 
 
 if __name__ == "__main__":
     app = QApplication([])
-    dialog = LoginDialog()
+    dialog = RegistrationDialog()
     dialog.exec()
     app.exec()
