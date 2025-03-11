@@ -12,6 +12,8 @@ class RegistrationDialog(QDialog):
     settings_saved = pyqtSignal(dict)
     
     script_directory = os.path.dirname(os.path.abspath(sys.argv[0]))
+    
+    input_widgets: dict = {}
 
     def __init__(self, parent=None) -> None:
         super().__init__(parent)
@@ -70,8 +72,6 @@ class RegistrationDialog(QDialog):
         password_layout.addWidget(self.password_2_input)
         password_layout.addWidget(self.show_password_2_button)
         
-        # TODO: brth date as date edit
-        
         self.email_input = QLineEdit(self)
         self.email_input.setPlaceholderText("Email")
         
@@ -95,9 +95,9 @@ class RegistrationDialog(QDialog):
         self.birth_input.setMaximumDate(QDate.currentDate().addYears(-6))
         self.birth_input.setToolTip("You must be a tleast 6 years old to register.")
 
-        self.login_button = QPushButton("Create account", self)
-        self.login_button.clicked.connect(self.create_user)
-        self.login_button.setEnabled(False)
+        self.registration_button = QPushButton("Create account", self)
+        self.registration_button.clicked.connect(self.create_user)
+        self.registration_button.setEnabled(False)
         
         self.label = QLabel("Already have an account??")
         self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -113,7 +113,7 @@ class RegistrationDialog(QDialog):
         self.main_layout.addRow(self.email_input)
         self.main_layout.addRow(self.phone_input)
         self.main_layout.addRow(self.birth_input)
-        self.main_layout.addRow(self.login_button)
+        self.main_layout.addRow(self.registration_button)
         self.main_layout.addRow(self.label)
         self.main_layout.addRow(to_reg_form)
 
@@ -152,15 +152,13 @@ class RegistrationDialog(QDialog):
     def show_register(self):
         self.close()
         
-    def check_all_fields_filled(self):
-        widgets = (self.main_layout.itemAt(i).widget() for i in range(self.main_layout.count())) 
-        for widget in widgets:
-            if isinstance(widget, QLineEdit):
-                print(f"linedit: {widget.objectName()} - {widget.text()}")
+    def check_all_fields_filled(self, valid):
+        widgets_filled = all(widget.text().strip() != "" and valid for i in range(self.main_layout.count()) if isinstance(widget := self.main_layout.itemAt(i).widget(), QLineEdit))
+        self.registration_button.setEnabled(widgets_filled)
         
     def validate_input(self, widget) -> None:
         self.set_input_valid(widget.hasAcceptableInput(), widget)
-        self.check_all_fields_filled()
+        self.check_all_fields_filled(widget.hasAcceptableInput())
         
     def set_input_valid(self, is_valid: bool, widget) -> None:
         palette = widget.palette()
