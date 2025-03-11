@@ -174,5 +174,7 @@ class RegistrationDialog(QDialog):
 if __name__ == "__main__":
     app = QApplication([])
     dialog = RegistrationDialog()
-    dialog.exec()
+    a = dialog.exec()
+    if a or not a:
+        app.quit()
     app.exec()
