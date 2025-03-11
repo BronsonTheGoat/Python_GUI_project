@@ -54,6 +54,7 @@ class RegistrationDialog(QDialog):
         self.password_2_input = QLineEdit(self)
         self.password_2_input.setPlaceholderText("Repeat password")
         self.password_2_input.setEchoMode(QLineEdit.EchoMode.Password)
+        self.password_2_input.setToolTip("Be careful: Passwords must match!")
         
         self.show_password_2_button = QPushButton(self)
         self.show_password_2_button.setIcon(QIcon(self.show_icon))
@@ -66,7 +67,7 @@ class RegistrationDialog(QDialog):
         self.password_input.textChanged.connect(lambda: self.validate_input(self.password_input))
         pw_2_validator = QRegularExpressionValidator(password_regex, self.password_input)
         self.password_2_input.setValidator(pw_2_validator)
-        self.password_2_input.textChanged.connect(lambda: self.validate_input(self.password_2_input))
+        self.password_2_input.textChanged.connect(lambda: self.validate_input(self.password_2_input, True))
         
         password_layout = QHBoxLayout()
         password_layout.addWidget(self.password_2_input)
@@ -153,16 +154,23 @@ class RegistrationDialog(QDialog):
             widget.setEchoMode(QLineEdit.EchoMode.Normal)
             self.sender().setIcon(QIcon(self.hide_icon))
             
-    def show_register(self):
+    def show_register(self) ->None:
         self.close()
         
-    def check_all_fields_filled(self, valid):
-        widgets_filled = all(widget.text().strip() != "" and valid for i in range(self.main_layout.count()) if isinstance(widget := self.main_layout.itemAt(i).widget(), QLineEdit))
+    def check_all_fields_filled(self, valid) -> None:
+        widgets_filled: list = all(widget.text().strip() != "" and valid for i in range(self.main_layout.count()) if isinstance(widget := self.main_layout.itemAt(i).widget(), QLineEdit))
         self.registration_button.setEnabled(widgets_filled)
         
-    def validate_input(self, widget) -> None:
-        self.set_input_valid(widget.hasAcceptableInput(), widget)
-        self.check_all_fields_filled(widget.hasAcceptableInput())
+    def password_match(self) -> bool:
+        return self.password_input.text() == self.password_2_input.text()
+        
+    def validate_input(self, widget, is_password=False) -> None:
+        if is_password:
+            valid = self.password_match() and widget.hasAcceptableInput()
+        else:
+            valid = widget.hasAcceptableInput()
+        self.set_input_valid(valid, widget)
+        self.check_all_fields_filled(valid)            
         
     def set_input_valid(self, is_valid: bool, widget) -> None:
         palette = widget.palette()
