@@ -112,34 +112,38 @@ class RegistrationDialog(QDialog):
         self.main_layout.addRow(self.password_2_input, self.show_password_2_button)
         self.main_layout.addRow(self.email_input)
         self.main_layout.addRow(self.phone_input)
+        self.main_layout.addRow(QLabel("Birth date:"))
         self.main_layout.addRow(self.birth_input)
         self.main_layout.addRow(self.registration_button)
         self.main_layout.addRow(self.label)
         self.main_layout.addRow(to_reg_form)
 
     # Methods
-    def create_user(self) -> list:
-        print("Query from database...")
+    def create_user(self) -> None:
+        print("Query to database...")
+        user = {"name": self.name_input.text(),
+                "username": self.username_input.text(),
+                "password": self.password_input.text(),
+                "email": self.email_input.text(),
+                "phone": self.phone_input.text(),
+                "birth_date": self.birth_input.date().toString('yyyy-MM-dd'),
+                "authorization": "user"
+                }
+        print(user)
+        
         query = QSqlQuery(self.db)
-        query.prepare("SELECT * FROM users WHERE username = ? AND password = ?")
-        query.addBindValue(f'{self.username_input.text()}')
-        query.addBindValue(f'{self.password_input.text()}')
-        users: list = []
-
+        sql = f"INSERT INTO users ({", ".join(user.keys())}) Values ({", ".join(["?" for _ in range(len(user))])})"
+        print(sql)
+        query.prepare(sql)
+        for value in user.values():
+            query.addBindValue(value)
+            
         if query.exec():
-            while query.next():
-                print(query.value(1))
-                name = query.value(1)
-                auth = query.value(7)
-                users.append((name, auth))
+                print("User succesfully created")
+                QMessageBox.information(self, "User created", "Your registration was succesful.\nYou can login now.")
         else:
             print("Error fetching users:", query.lastError().text())
-            
-        if users == []:
-            QMessageBox.warning(self, "Warning", "Non existing user or wrong password")
-        else:
-            print(users)
-            return users
+            QMessageBox.warning(self, "Error", "For some reason the registration was incomplete.")
         
     def show_password(self, widget) -> None:
         if widget.echoMode() == QLineEdit.EchoMode.Normal:
