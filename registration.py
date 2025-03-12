@@ -122,7 +122,7 @@ class RegistrationDialog(QDialog):
     # Methods
     def create_user(self) -> None:
         print("Query to database...")
-        user = {"name": self.name_input.text(),
+        user: dict = {"name": self.name_input.text(),
                 "username": self.username_input.text(),
                 "password": self.password_input.text(),
                 "email": self.email_input.text(),
@@ -133,7 +133,7 @@ class RegistrationDialog(QDialog):
         print(user)
         
         query = QSqlQuery(self.db)
-        sql = f"INSERT INTO users ({", ".join(user.keys())}) Values ({", ".join(["?" for _ in range(len(user))])})"
+        sql: str = f"INSERT INTO users ({", ".join(user.keys())}) Values ({", ".join(["?" for _ in range(len(user))])})"
         print(sql)
         query.prepare(sql)
         for value in user.values():
@@ -166,7 +166,7 @@ class RegistrationDialog(QDialog):
         
     def validate_input(self, widget, is_password=False) -> None:
         if is_password:
-            valid = self.password_match() and widget.hasAcceptableInput()
+            valid: bool = self.password_match() and widget.hasAcceptableInput()
         else:
             valid = widget.hasAcceptableInput()
         self.set_input_valid(valid, widget)

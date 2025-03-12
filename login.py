@@ -10,7 +10,7 @@ from clikc_label import ClickableLabel
 from registration import RegistrationDialog
 
 class LoginDialog(QDialog):
-    settings_saved = pyqtSignal(dict)
+    accepted_signal = pyqtSignal(dict)
     
     script_directory = os.path.dirname(os.path.abspath(sys.argv[0]))
 
@@ -72,22 +72,22 @@ class LoginDialog(QDialog):
         query.prepare("SELECT * FROM users WHERE username = ? AND password = ?")
         query.addBindValue(f'{self.username_input.text()}')
         query.addBindValue(f'{self.password_input.text()}')
-        users = []
+        user = {"username": "", "athority": ""}
 
         if query.exec():
             while query.next():
-                print(query.value(1))
                 name = query.value(1)
                 auth = query.value(7)
-                users.append((name, auth))
+                user.update({"username": name})
+                user.update({"authority": auth})
         else:
             print("Error fetching users:", query.lastError().text())
             
-        if users == []:
+        if user == []:
             QMessageBox.warning(self, "Warning", "Non existing user or wrong password")
         else:
-            print(users)
-            return users
+            self.accepted_signal.emit(user)
+            self.accept()
         
     def show_password(self) -> None:
         if self.password_input.echoMode() == QLineEdit.EchoMode.Normal:

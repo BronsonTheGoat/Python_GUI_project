@@ -3,11 +3,12 @@ This is the main file of a library app.
 It contains the main class and main functions.
 """
 from PyQt6.QtWidgets import QApplication, QMainWindow, QStackedWidget, QWidget, QGridLayout, QVBoxLayout, QHBoxLayout,\
-QLabel, QLineEdit, QComboBox, QTableWidget, QTableWidgetItem, QMessageBox, QPushButton, QSpinBox
+QLabel, QLineEdit, QComboBox, QTableWidget, QTableWidgetItem, QMessageBox, QPushButton, QSpinBox, QFrame
 from PyQt6.QtGui import QAction, QIcon, QPixmap
 from PyQt6.QtCore import QSize, Qt
 from PyQt6.QtSql import QSqlDatabase, QSqlQuery
 from sqlconnector import create_connection
+from login import LoginDialog
 import os
 import sys
 
@@ -16,14 +17,17 @@ class LibraryApp(QMainWindow):
       super().__init__()
       
       self.script_directory = os.path.dirname(os.path.abspath(sys.argv[0]))
+      self.session = {"user": "",
+                      "auth":"",
+                      "started": False}
       
       self.db = QSqlDatabase.database()
       if not self.db.isOpen():
         print("Database is not open!")
       
       self.initUi()
-      self.fill_combo()
-      self.fill_table()
+    #   self.fill_combo()
+    #   self.fill_table()
     
     # Methods
     def initUi(self) -> None:
@@ -41,10 +45,11 @@ class LibraryApp(QMainWindow):
         self.exit_action.triggered.connect(self.close)
 
         self.login_action = QAction('Login', self)
-        self.login_action.triggered.connect(lambda: self.print_message('login'))
+        self.login_action.triggered.connect(self.login)
         
         self.logout_action = QAction('Logout', self)
         self.logout_action.triggered.connect(self.logout)
+        self.logout_action.setVisible(False)
         
         self.dashboard_action = QAction('Dashboard', self)
         self.dashboard_action.triggered.connect(lambda: self.print_message('dashboard'))
@@ -83,7 +88,6 @@ class LibraryApp(QMainWindow):
         self.header = QHBoxLayout()
         
         self.welcome_text = QLabel(self)
-        self.welcome_text.setText("Welcome 'User'")
         
         self.clock = QLabel(self)
         self.clock.setText("current date - time")
@@ -121,7 +125,8 @@ class LibraryApp(QMainWindow):
         self.filter_area.addWidget(self.number_of_records)
         
         # Edit area - shown only for admins and super admin
-        self.edit_area = QHBoxLayout()
+        self.edit_area = QFrame()
+        self.edit_area_layout = QHBoxLayout()
         
         self.edit_book_button = QPushButton("Edit book", self)
         self.edit_book_button.clicked.connect(self.edit_book)
@@ -129,8 +134,10 @@ class LibraryApp(QMainWindow):
         self.add_book_button = QPushButton("Add new book", self)
         self.add_book_button.clicked.connect(self.add_book)
         
-        self.edit_area.addWidget(self.add_book_button)
-        self.edit_area.addWidget(self.edit_book_button)
+        self.edit_area_layout.addWidget(self.add_book_button)
+        self.edit_area_layout.addWidget(self.edit_book_button)
+        
+        self.edit_area.setLayout(self.edit_area_layout)
         
         # Results shown in table or as widgets with thumbnail
         self.results_table = QTableWidget()
@@ -138,7 +145,7 @@ class LibraryApp(QMainWindow):
         # Set main layout
         self.main_page_layout.addLayout(self.header)
         self.main_page_layout.addLayout(self.filter_area)
-        self.main_page_layout.addLayout(self.edit_area)
+        self.main_page_layout.addWidget(self.edit_area)
         self.main_page_layout.addWidget(self.results_table)
         
         # Add elements to central widget
@@ -146,11 +153,45 @@ class LibraryApp(QMainWindow):
         self.central_widget.addWidget(self.main_page)
 
         self.setCentralWidget(self.central_widget)
-        self.central_widget.setCurrentIndex(1)
+        self.central_widget.setCurrentIndex(0)
+        
+        self.show()
         
     def print_message(self, message):
         # print('open')
         print(message)
+        
+    def login(self):
+        login = LoginDialog(self)
+        login.accepted_signal.connect(self.set_session)
+        response = login.exec()
+        # print(self.session)
+        
+        if response:
+            self.welcome_text.setText(f"Welcome {self.session["user"]}!")
+            self.login_action.setVisible(False)
+            self.logout_action.setVisible(True)
+            if self.session["auth"] not in ("admin", "superadmin"):
+                enabled: bool = False
+            self.show_hide_elements(enabled)
+            self.fill_combo()
+            self.fill_table()
+            self.central_widget.setCurrentIndex(1)
+            
+        else:
+            self.session["user"] = ""
+            self.session["auth"] = ""
+            self.session["started"] = False
+            
+    def set_session(self, user):
+        self.session["user"] = user["username"]
+        self.session["auth"] = user["authority"]
+        self.session["started"] = True
+        
+    def show_hide_elements(self, enabled: bool = True):
+        self.dashboard_action.setVisible(enabled)
+        self.edit_area.setVisible(enabled)
+        
         
     def fill_combo(self):
         query = QSqlQuery(self.db)
@@ -214,6 +255,8 @@ class LibraryApp(QMainWindow):
         
     def logout(self):
         self.central_widget.setCurrentIndex(0)
+        self.login_action.setVisible(True)
+        self.logout_action.setVisible(False)
         
     def edit_book(self):
         raise NotImplementedError("Not implemented yet")
@@ -231,6 +274,4 @@ if __name__ == "__main__":
         sys.exit(1)
 
     window = LibraryApp()
-    window.show()
-
     app.exec()
