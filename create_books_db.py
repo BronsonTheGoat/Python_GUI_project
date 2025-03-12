@@ -25,6 +25,7 @@ def create_connection():
 
 def create_table():
     query = QSqlQuery()
+    query.exec("""DROP TBALE IF EXISTS book""")
     query.exec("""CREATE TABLE IF NOT EXISTS books (
                     id INTEGER PRIMARY KEY AUTOINCREMENT, 
                     isbn13 INTEGER NOT NULL,
