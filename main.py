@@ -97,6 +97,7 @@ class LibraryApp(QMainWindow):
         self.header.addWidget(self.clock)
         
         # Main page search section
+        # TODO: add more option to filter the results
         self.filter_area = QHBoxLayout()
         
         self.search_input = QLineEdit()

@@ -107,4 +107,5 @@ if __name__ == "__main__":
     app = QApplication([])
     dialog = LoginDialog()
     dialog.exec()
+    sys.exit(1)
     app.exec()
