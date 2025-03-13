@@ -4,28 +4,31 @@ It contains the main class and main functions.
 """
 from PyQt6.QtWidgets import QApplication, QMainWindow, QStackedWidget, QWidget, QGridLayout, QVBoxLayout, QHBoxLayout,\
 QLabel, QLineEdit, QComboBox, QTableWidget, QTableWidgetItem, QMessageBox, QPushButton, QSpinBox, QFrame
-from PyQt6.QtGui import QAction, QIcon, QPixmap
+from PyQt6.QtGui import QAction, QIcon, QPixmap, QColor
 from PyQt6.QtCore import QSize, Qt
 from PyQt6.QtSql import QSqlDatabase, QSqlQuery
 from sqlconnector import create_connection
 from login import LoginDialog
+from edit_book import EditBookDialog
 import os
 import sys
 
 class LibraryApp(QMainWindow):
     def __init__(self) -> None:
-      super().__init__()
+        super().__init__()
       
-      self.script_directory = os.path.dirname(os.path.abspath(sys.argv[0]))
-      self.session = {"user": "",
-                      "auth":"",
-                      "started": False}
+        self.script_directory = os.path.dirname(os.path.abspath(sys.argv[0]))
+        self.session = {"user": "",
+                        "auth":"",
+                        "started": False}
+        
+        self.items:dict = {}
       
-      self.db = QSqlDatabase.database()
-      if not self.db.isOpen():
-        print("Database is not open!")
-      
-      self.initUi()
+        self.db = QSqlDatabase.database()
+        if not self.db.isOpen():
+            print("Database is not open!")
+        
+        self.initUi()
     #   self.fill_combo()
     #   self.fill_table()
     
@@ -130,10 +133,10 @@ class LibraryApp(QMainWindow):
         self.edit_area_layout = QHBoxLayout()
         
         self.edit_book_button = QPushButton("Edit book", self)
-        self.edit_book_button.clicked.connect(self.edit_book)
+        self.edit_book_button.clicked.connect(self.add_edit_book)
         
         self.add_book_button = QPushButton("Add new book", self)
-        self.add_book_button.clicked.connect(self.add_book)
+        self.add_book_button.clicked.connect(self.add_edit_book)
         
         self.edit_area_layout.addWidget(self.add_book_button)
         self.edit_area_layout.addWidget(self.edit_book_button)
@@ -172,8 +175,7 @@ class LibraryApp(QMainWindow):
             self.welcome_text.setText(f"Welcome {self.session["user"]}!")
             self.login_action.setVisible(False)
             self.logout_action.setVisible(True)
-            if self.session["auth"] not in ("admin", "superadmin"):
-                enabled: bool = False
+            enabled: bool = False if self.session["auth"] not in ("admin", "superadmin") else True                
             self.show_hide_elements(enabled)
             self.fill_combo()
             self.fill_table()
@@ -189,7 +191,7 @@ class LibraryApp(QMainWindow):
         self.session["auth"] = user["authority"]
         self.session["started"] = True
         
-    def show_hide_elements(self, enabled: bool = True):
+    def show_hide_elements(self, enabled):
         self.dashboard_action.setVisible(enabled)
         self.edit_area.setVisible(enabled)
         
@@ -238,10 +240,20 @@ class LibraryApp(QMainWindow):
             for col in range(self.results_table.columnCount()):
                 self.results_table.setItem(row, col, QTableWidgetItem(str(column[col])))
                 
-    #     self.results_table.cellClicked.connect(self.cell_clicked)
+        self.results_table.cellClicked.connect(self.cell_clicked)
+        self.originalBg = self.results_table.item(0,0).background()
         
-    # def cell_clicked(self):
-    #     raise NotImplementedError("Method not implemented")
+    def cell_clicked(self, row):
+        if row in self.items.keys() or len(self.items > 0):
+            self.items = {}            
+            self.set_color_to_row(row, self.originalBg)
+        else:
+            self.items = {row:[self.results_table.item(row, column).text() for column in range(self.results_table.columnCount())]}
+            self.set_color_to_row(row, QColor("green"))           
+            
+    def set_color_to_row(self, rowIndex, color):
+        for j in range(self.results_table.columnCount()):
+            self.results_table.item(rowIndex, j).setBackground(color)
     
     def create_filter_query(self):        
         order_by = "id" if "--" in self.order_by_combo.currentText() else self.order_by_combo.currentText()
@@ -259,11 +271,12 @@ class LibraryApp(QMainWindow):
         self.login_action.setVisible(True)
         self.logout_action.setVisible(False)
         
-    def edit_book(self):
-        raise NotImplementedError("Not implemented yet")
-    
-    def add_book(self):
-        raise NotImplementedError("Not implemented yet")
+    def add_edit_book(self):
+        headers = [self.results_table.horizontalHeaderItem(c).text() for c in range(self.results_table.columnCount())]
+        page = self.sender().text().split(" ")[0]
+        data = list(self.items.values())[0] if self.items else []
+        edit_books = EditBookDialog(headers, page, data)
+        edit_books.exec()
       
     
     
