@@ -244,9 +244,14 @@ class LibraryApp(QMainWindow):
         self.originalBg = self.results_table.item(0,0).background()
         
     def cell_clicked(self, row):
-        if row in self.items.keys() or len(self.items > 0):
-            self.items = {}            
+        if row in self.items.keys():
             self.set_color_to_row(row, self.originalBg)
+            self.items = {}
+        elif len(self.items) > 0:
+            self.set_color_to_row(list(self.items.keys())[0], self.originalBg)
+            self.items = {}
+            self.items = {row:[self.results_table.item(row, column).text() for column in range(self.results_table.columnCount())]}
+            self.set_color_to_row(row, QColor("green"))
         else:
             self.items = {row:[self.results_table.item(row, column).text() for column in range(self.results_table.columnCount())]}
             self.set_color_to_row(row, QColor("green"))           

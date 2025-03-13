@@ -72,7 +72,7 @@ class LoginDialog(QDialog):
         query.prepare("SELECT * FROM users WHERE username = ? AND password = ?")
         query.addBindValue(f'{self.username_input.text()}')
         query.addBindValue(f'{self.password_input.text()}')
-        user = {"username": "", "athority": ""}
+        user = {"username": "", "authority": ""}
 
         if query.exec():
             while query.next():
@@ -82,12 +82,14 @@ class LoginDialog(QDialog):
                 user.update({"authority": auth})
         else:
             print("Error fetching users:", query.lastError().text())
-            
-        if user == []:
+
+        if user["username"] == "":
             QMessageBox.warning(self, "Warning", "Non existing user or wrong password")
+            self.username_input.setText("")
+            self.password_input.setText("")
         else:
-            self.accepted_signal.emit(user)
             self.accept()
+        self.accepted_signal.emit(user)
         
     def show_password(self) -> None:
         if self.password_input.echoMode() == QLineEdit.EchoMode.Normal:

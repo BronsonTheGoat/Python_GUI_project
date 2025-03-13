@@ -14,20 +14,12 @@ class EditBookDialog(QDialog):
         #         print("Database is not open!")
         # else:
         #     print("Connection failed")
-                
-        # tabwidget for the 3 different option
-        # Edit Delete Add new
-        
-        # List all the attributes and add a button to do the corresponding action
-        # The listing could be one method for all tabs as the button creation then
-        # in an other method the action could be selected
         
         self.resize(400, 300)
         
-        self.fields: list = fields
-        self.data: list = data if len(data) > 0 else ["" for _ in range(len(fields))]
-        self.active_tab = self.set_default_tab_num(tab_name)
-        print(self.active_tab)
+        self.fields: list[str] = fields
+        self.data: list[str] = data if len(data) > 0 else ["" for _ in range(len(fields))]
+        self.active_tab = self.set_default_tab(tab_name)
         
         self.main_layout = QVBoxLayout(self)
         
@@ -47,10 +39,12 @@ class EditBookDialog(QDialog):
         
         self.main_layout.addWidget(self.tabs)
         
-    def set_default_tab_num(self, tab_name):
-        tabs: dict = {"Add": 1,
-                      "Edit": 2}
-        return tabs.get(tab_name)
+        self.set_default_tab(tab_name)
+        
+    def set_default_tab(self, tab_name: str) -> int:
+        tab_functions: dict[str, int] = {"Add": 0,
+                                "Edit": 1}
+        return tab_functions.get(tab_name)
         
     def setup_tab(self, i: int) -> None:
         tab = self.tabs.widget(i)
@@ -63,7 +57,8 @@ class EditBookDialog(QDialog):
             if self.fields.index(title) > 0:
                 label = QLabel(title)
                 input_book = QLineEdit()
-                input_book.setText(item)
+                if self.active_tab == 1 and i == 1:
+                    input_book.setText(item)
             
                 layout.addRow(label, input_book)
         
