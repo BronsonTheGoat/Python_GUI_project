@@ -138,8 +138,12 @@ class LibraryApp(QMainWindow):
         self.add_book_button = QPushButton("Add new book", self)
         self.add_book_button.clicked.connect(self.add_edit_book)
         
+        self.delete_book_button = QPushButton("Delete book", self)
+        self.delete_book_button.clicked.connect(self.delete_book)
+        
         self.edit_area_layout.addWidget(self.add_book_button)
         self.edit_area_layout.addWidget(self.edit_book_button)
+        self.edit_area_layout.addWidget(self.delete_book_button)
         
         self.edit_area.setLayout(self.edit_area_layout)
         
@@ -282,7 +286,17 @@ class LibraryApp(QMainWindow):
         data = list(self.items.values())[0] if self.items else []
         edit_books = EditBookDialog(headers, page, data)
         edit_books.exec()
-      
+        
+    def delete_book(self):
+        buttons = QMessageBox.StandardButton.Cancel | QMessageBox.StandardButton.Yes
+        user_choice = QMessageBox.critical(self, "Warning!",
+                             """You are trying to delete a book from the database!\n
+                                There's no possibility to undo this move!\n
+                                Are you sure about this?""", buttons)
+        if user_choice == QMessageBox.StandardButton.Yes:
+            print("Book deleted successfully from database...")
+        else:
+            print("User dcided to keep the book.")
     
     
 if __name__ == "__main__":
