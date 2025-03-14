@@ -7,14 +7,14 @@ QLabel, QLineEdit, QComboBox, QTableWidget, QTableWidgetItem, QMessageBox, QPush
 from PyQt6.QtGui import QAction, QIcon, QPixmap, QColor
 from PyQt6.QtCore import QSize, Qt
 from PyQt6.QtSql import QSqlDatabase, QSqlQuery
-from sqlconnector import create_connection
+from db_handler import DatabaseHandler
 from login import LoginDialog
 from edit_book import EditBookDialog
 import os
 import sys
 
 class LibraryApp(QMainWindow):
-    def __init__(self) -> None:
+    def __init__(self, conn) -> None:
         super().__init__()
       
         self.script_directory = os.path.dirname(os.path.abspath(sys.argv[0]))
@@ -22,20 +22,18 @@ class LibraryApp(QMainWindow):
                         "auth":"",
                         "started": False}
         
-        self.items:dict = {}
+        self.selected_book:dict = {}
       
-        self.db = QSqlDatabase.database()
-        if not self.db.isOpen():
+        self.db = conn
+        if not self.db.get_db().isOpen():
             print("Database is not open!")
         
         self.initUi()
-    #   self.fill_combo()
-    #   self.fill_table()
     
     # Methods
     def initUi(self) -> None:
         self.setWindowTitle("Library app")
-        self.setFixedSize(QSize(800, 600))
+        self.setFixedSize(QSize(1200, 600))
         self.setWindowIcon(QIcon(f"{self.script_directory}/assets/books.png"))
         
         # Menu
@@ -71,13 +69,10 @@ class LibraryApp(QMainWindow):
         self.welcome_page_layout = QVBoxLayout()
         self.welcome_page.setLayout(self.welcome_page_layout)
         
-        self.welcome_image = "library_small.jpg"
+        self.welcome_image = "library.jpg"
         self.welcome_backround = QLabel()
         self.pixmap = QPixmap(f"{self.script_directory}/assets/{self.welcome_image}")
-        # Set pixmap width and height maximum 800 x 600 px
-        # self.pixmap_width = self.set_pixmap_width()
-        # self.pixmap_heoght = self.set_pixmap_height()
-        # self.pixmap = pixmap.scaled(int(pixmap.width()/2), int(pixmap.height()/2))
+        self.pixmap = self.pixmap.scaled(int(self.width()), int(self.pixmap.height()*(self.width()/self.pixmap.width())))
         self.welcome_backround.setPixmap(self.pixmap)
         
         self.welcome_page_layout.addWidget(self.welcome_backround)
@@ -91,6 +86,8 @@ class LibraryApp(QMainWindow):
         self.header = QHBoxLayout()
         
         self.welcome_text = QLabel(self)
+        self.welcome_text.setStyleSheet("font-size: 24px;")
+        self.welcome_text.setAlignment(Qt.AlignmentFlag.AlignCenter)
         
         self.clock = QLabel(self)
         self.clock.setText("current date - time")
@@ -170,7 +167,7 @@ class LibraryApp(QMainWindow):
         print(message)
         
     def login(self):
-        login = LoginDialog(self)
+        login = LoginDialog(self.db)
         login.accepted_signal.connect(self.set_session)
         response = login.exec()
         # print(self.session)
@@ -182,7 +179,7 @@ class LibraryApp(QMainWindow):
             enabled: bool = False if self.session["auth"] not in ("admin", "superadmin") else True                
             self.show_hide_elements(enabled)
             self.fill_combo()
-            self.fill_table()
+            # self.fill_table()
             self.central_widget.setCurrentIndex(1)
             
         else:
@@ -201,16 +198,13 @@ class LibraryApp(QMainWindow):
         
         
     def fill_combo(self):
-        query = QSqlQuery(self.db)
-        query.prepare("PRAGMA table_info (books)")
-
-        if query.exec():
-            while query.next():
-                self.filter_combo.addItem(query.value(1))
-                self.order_by_combo.addItem(query.value(1))
-        else:
-            print("Error fetching books:", query.lastError().text())
+        query_txt = "PRAGMA table_info (books)"
+        records = self.db.fetch(query_txt)
+        for row in records:
+            self.filter_combo.addItem(row[1])
+            self.order_by_combo.addItem(row[1])
             
+    # TODO: Need to convert to new db connection
     def get_data_from_db(self, sql_query, columns):
         query = QSqlQuery(self.db)
         query.prepare(sql_query)
@@ -248,16 +242,16 @@ class LibraryApp(QMainWindow):
         self.originalBg = self.results_table.item(0,0).background()
         
     def cell_clicked(self, row):
-        if row in self.items.keys():
+        if row in self.selected_book.keys():
             self.set_color_to_row(row, self.originalBg)
-            self.items = {}
-        elif len(self.items) > 0:
-            self.set_color_to_row(list(self.items.keys())[0], self.originalBg)
-            self.items = {}
-            self.items = {row:[self.results_table.item(row, column).text() for column in range(self.results_table.columnCount())]}
+            self.selected_book = {}
+        elif len(self.selected_book) > 0:
+            self.set_color_to_row(list(self.selected_book.keys())[0], self.originalBg)
+            self.selected_book = {}
+            self.selected_book = {row:[self.results_table.item(row, column).text() for column in range(self.results_table.columnCount())]}
             self.set_color_to_row(row, QColor("green"))
         else:
-            self.items = {row:[self.results_table.item(row, column).text() for column in range(self.results_table.columnCount())]}
+            self.selected_book = {row:[self.results_table.item(row, column).text() for column in range(self.results_table.columnCount())]}
             self.set_color_to_row(row, QColor("green"))           
             
     def set_color_to_row(self, rowIndex, color):
@@ -283,28 +277,34 @@ class LibraryApp(QMainWindow):
     def add_edit_book(self):
         headers = [self.results_table.horizontalHeaderItem(c).text() for c in range(self.results_table.columnCount())]
         page = self.sender().text().split(" ")[0]
-        data = list(self.items.values())[0] if self.items else []
-        edit_books = EditBookDialog(headers, page, data)
+        data = list(self.selected_book.values())[0] if self.selected_book else []
+        edit_books = EditBookDialog(fields=headers, tab_name=page, data=data)
         edit_books.exec()
         
     def delete_book(self):
-        buttons = QMessageBox.StandardButton.Cancel | QMessageBox.StandardButton.Yes
-        user_choice = QMessageBox.critical(self, "Warning!",
-                             """You are trying to delete a book from the database!\n
-                                There's no possibility to undo this move!\n
-                                Are you sure about this?""", buttons)
-        if user_choice == QMessageBox.StandardButton.Yes:
-            print("Book deleted successfully from database...")
+        if len(self.selected_book) > 0:
+            buttons = QMessageBox.StandardButton.Cancel | QMessageBox.StandardButton.Yes
+            user_choice = QMessageBox.critical(self, "Warning!",
+                                """You are trying to delete a book from the database!\n
+                                    There's no possibility to undo this move!\n
+                                    Are you sure about this?""", buttons)
+            if user_choice == QMessageBox.StandardButton.Yes:
+                print(f"Book deleted successfully from database... {list(self.selected_book.values())[0][0]}")
+                self.fill_table()
+            else:
+                print("User dcided to keep the book.")
         else:
-            print("User dcided to keep the book.")
+            QMessageBox.information(self, "No book selected", "Please select a book to perform this action!")
     
     
 if __name__ == "__main__":
     app = QApplication([])
 
-    if not create_connection('QSQLITE', "library"):
+    if not DatabaseHandler():
         QMessageBox.critical("Error", "Databasse is not available!")
         sys.exit(1)
-
-    window = LibraryApp()
+    else:
+        conn = DatabaseHandler()
+        
+    window = LibraryApp(conn)
     app.exec()

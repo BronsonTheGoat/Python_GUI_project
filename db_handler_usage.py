@@ -1,5 +1,5 @@
 from PyQt6.QtWidgets import QWidget
-from db_handler_sample import DatabaseHandler
+from db_handler import DatabaseHandler
 
 class MyForm(QWidget):
     def __init__(self):

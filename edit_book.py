@@ -16,6 +16,7 @@ class EditBookDialog(QDialog):
         #     print("Connection failed")
         
         self.resize(400, 300)
+        self.setWindowTitle("Add / modify book")
         
         self.fields: list[str] = fields
         self.data: list[str] = data if len(data) > 0 else ["" for _ in range(len(fields))]

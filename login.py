@@ -14,16 +14,17 @@ class LoginDialog(QDialog):
     
     script_directory = os.path.dirname(os.path.abspath(sys.argv[0]))
 
-    def __init__(self, parent=None) -> None:
+    def __init__(self, conn, parent=None) -> None:
         super().__init__(parent)
         
-        if create_connection("QSQLITE", "library"):
-            print("Connected succesfully.")
-            self.db = QSqlDatabase.database()
-            if not self.db.isOpen():
-                print("Database is not open!")
-        else:
-            print("Connection failed")
+        self.db = conn
+        # if create_connection("QSQLITE", "library"):
+        #     print("Connected succesfully.")
+        #     self.db = QSqlDatabase.database()
+        #     if not self.db.isOpen():
+        #         print("Database is not open!")
+        # else:
+        #     print("Connection failed")
         
         self.hide_icon = QPixmap(f"{self.script_directory}/assets/hidden.png")
         self.show_icon = QPixmap(f"{self.script_directory}/assets/eye.png")
@@ -68,28 +69,25 @@ class LoginDialog(QDialog):
         if self.username_input.text() == "" or self.password_input.text() == "":
             QMessageBox.information(self, "Empty fields", "Username or password field is empty!")
             return []
-        query = QSqlQuery(self.db)
-        query.prepare("SELECT * FROM users WHERE username = ? AND password = ?")
-        query.addBindValue(f'{self.username_input.text()}')
-        query.addBindValue(f'{self.password_input.text()}')
+        query_str = "SELECT name, authorization FROM users WHERE username = ? AND password = ?"
+        params = [self.username_input.text(),self.password_input.text()]
         user = {"username": "", "authority": ""}
-
-        if query.exec():
-            while query.next():
-                name = query.value(1)
-                auth = query.value(7)
-                user.update({"username": name})
-                user.update({"authority": auth})
-        else:
-            print("Error fetching users:", query.lastError().text())
-
-        if user["username"] == "":
+        
+        records = self.db.fetch(query_str, params)
+        print(records)
+        
+        if not records:
             QMessageBox.warning(self, "Warning", "Non existing user or wrong password")
             self.username_input.setText("")
             self.password_input.setText("")
         else:
+            for key, item in zip(list(user.keys()), records[0]):
+                user.update({key: item})
+            self.accepted_signal.emit(user)
             self.accept()
-        self.accepted_signal.emit(user)
+        
+    def hash_password(password: str) -> str:
+        return hashlib.sha256(password.encode()).hexdigest()
         
     def show_password(self) -> None:
         if self.password_input.echoMode() == QLineEdit.EchoMode.Normal:
@@ -106,8 +104,14 @@ class LoginDialog(QDialog):
 
 
 if __name__ == "__main__":
+    from db_handler import DatabaseHandler
     app = QApplication([])
-    dialog = LoginDialog()
+    if not DatabaseHandler():
+        QMessageBox.critical("Error", "Databasse is not available!")
+        sys.exit(1)
+    else:
+        conn = DatabaseHandler()
+    dialog = LoginDialog(conn)
     dialog.exec()
     sys.exit(1)
     app.exec()
