@@ -53,17 +53,21 @@ class LibraryApp(QMainWindow):
         
         self.dashboard_action = QAction("Dashboard", self)
         self.dashboard_action.triggered.connect(self.show_dashboard)
+        self.dashboard_action.setVisible(False)
         
         self.save_menu = self.menubar.addMenu("Save")
         self.save_action = QAction("Save", self)
         self.save_action.setShortcut("Ctrl+S")
         self.save_action.triggered.connect(self.save_result)
+        self.save_action.setVisible(False)
 
         self.file_menu.addAction(self.login_action)
         self.file_menu.addAction(self.logout_action)
         self.file_menu.addAction(self.dashboard_action)
         self.file_menu.addSeparator()
         self.file_menu.addAction(self.exit_action)
+        
+        self.save_menu.addAction(self.save_action)
     
         # Main layout
         self.central_widget = QStackedWidget()
@@ -187,6 +191,7 @@ class LibraryApp(QMainWindow):
             self.welcome_text.setText(f"Welcome {self.session["user"]}!")
             self.login_action.setVisible(False)
             self.logout_action.setVisible(True)
+            self.save_action.setVisible(True)
             enabled: bool = False if self.session["auth"] not in ("admin", "superadmin") else True                
             self.show_hide_elements(enabled)
             self.fill_combo()
@@ -288,6 +293,7 @@ class LibraryApp(QMainWindow):
         self.central_widget.setCurrentIndex(0)
         self.login_action.setVisible(True)
         self.logout_action.setVisible(False)
+        self.save_action.setVisible(False)
         
     def add_edit_book(self):
         headers = [self.results_table.horizontalHeaderItem(c).text() for c in range(self.results_table.columnCount())]
