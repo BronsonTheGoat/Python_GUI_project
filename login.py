@@ -1,11 +1,9 @@
 from PyQt6.QtWidgets import QApplication, QDialog, QFormLayout, QHBoxLayout, QLineEdit, QLabel, QPushButton, QMessageBox
 from PyQt6.QtGui import QPixmap, QIcon
 from PyQt6.QtCore import pyqtSignal, Qt
-from PyQt6.QtSql import QSqlDatabase, QSqlQuery
 import os
 import sys
 import hashlib
-from sqlconnector import create_connection
 from clikc_label import ClickableLabel
 from registration import RegistrationDialog
 
@@ -91,7 +89,7 @@ class LoginDialog(QDialog):
             
     def show_register(self):
         print("Go to registration form")
-        registration = RegistrationDialog()
+        registration = RegistrationDialog(self.db)
         registration.exec()
 
 

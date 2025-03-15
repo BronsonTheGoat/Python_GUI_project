@@ -1,12 +1,10 @@
 from PyQt6.QtWidgets import QApplication, QDialog, QFormLayout, QHBoxLayout, QLineEdit, QLabel, QPushButton, QMessageBox, QDateEdit
 from PyQt6.QtGui import QPixmap, QIcon, QRegularExpressionValidator, QPalette, QColor
 from PyQt6.QtCore import pyqtSignal, Qt, QRegularExpression, QDate
-from PyQt6.QtSql import QSqlDatabase, QSqlQuery
 import os
 import sys
 import hashlib
 from clikc_label import ClickableLabel
-from sqlconnector import create_connection
 
 class RegistrationDialog(QDialog):
     settings_saved = pyqtSignal(dict)

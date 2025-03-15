@@ -3,10 +3,9 @@ This is the main file of a library app.
 It contains the main class and main functions.
 """
 from PyQt6.QtWidgets import QApplication, QMainWindow, QStackedWidget, QWidget, QGridLayout, QVBoxLayout, QHBoxLayout,\
-QLabel, QLineEdit, QComboBox, QTableWidget, QTableWidgetItem, QMessageBox, QPushButton, QSpinBox, QFrame
+QLabel, QLineEdit, QComboBox, QTableWidget, QTableWidgetItem, QMessageBox, QPushButton, QSpinBox, QFrame, QFileDialog
 from PyQt6.QtGui import QAction, QIcon, QPixmap, QColor
-from PyQt6.QtCore import QSize, Qt
-from PyQt6.QtSql import QSqlDatabase, QSqlQuery
+from PyQt6.QtCore import QSize, Qt, QTimer, QDateTime
 from db_handler import DatabaseHandler
 from login import LoginDialog
 from edit_book import EditBookDialog
@@ -39,21 +38,26 @@ class LibraryApp(QMainWindow):
         # Menu
         self.menubar = self.menuBar()
 
-        self.file_menu = self.menubar.addMenu('File')
-        self.exit_action = QAction('Exit', self)
-        self.exit_action.setShortcut('Alt+F4')
-        self.exit_action.setStatusTip('Exit application')
+        self.file_menu = self.menubar.addMenu("File")
+        self.exit_action = QAction("Exit", self)
+        self.exit_action.setShortcut("Alt+F4")
+        self.exit_action.setStatusTip("Exit application")
         self.exit_action.triggered.connect(self.close)
 
-        self.login_action = QAction('Login', self)
+        self.login_action = QAction("Login", self)
         self.login_action.triggered.connect(self.login)
         
-        self.logout_action = QAction('Logout', self)
+        self.logout_action = QAction("Logout", self)
         self.logout_action.triggered.connect(self.logout)
         self.logout_action.setVisible(False)
         
-        self.dashboard_action = QAction('Dashboard', self)
-        self.dashboard_action.triggered.connect(lambda: self.print_message('dashboard'))
+        self.dashboard_action = QAction("Dashboard", self)
+        self.dashboard_action.triggered.connect(self.show_dashboard)
+        
+        self.save_menu = self.menubar.addMenu("Save")
+        self.save_action = QAction("Save", self)
+        self.save_action.setShortcut("Ctrl+S")
+        self.save_action.triggered.connect(self.save_result)
 
         self.file_menu.addAction(self.login_action)
         self.file_menu.addAction(self.logout_action)
@@ -63,6 +67,10 @@ class LibraryApp(QMainWindow):
     
         # Main layout
         self.central_widget = QStackedWidget()
+        
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.update_label)
+        self.timer.start(1000)  # milliseconds
 
         # Welcome page
         self.welcome_page = QWidget()
@@ -75,6 +83,11 @@ class LibraryApp(QMainWindow):
         self.pixmap = self.pixmap.scaled(int(self.width()), int(self.pixmap.height()*(self.width()/self.pixmap.width())))
         self.welcome_backround.setPixmap(self.pixmap)
         
+        self.main_text = QLabel("Library app")
+        self.main_text.setStyleSheet("font-family: 'Sans Serif'; font-size: 36px;")
+        self.main_text.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        
+        self.welcome_page_layout.addWidget(self.main_text)
         self.welcome_page_layout.addWidget(self.welcome_backround)
 
         # Main page
@@ -162,9 +175,8 @@ class LibraryApp(QMainWindow):
         
         self.show()
         
-    def print_message(self, message):
-        # print('open')
-        print(message)
+    def update_label(self):
+        self.clock.setText(f'{QDateTime.currentDateTime().toString()}')
         
     def login(self):
         login = LoginDialog(self.db)
@@ -185,6 +197,22 @@ class LibraryApp(QMainWindow):
             self.session["user"] = ""
             self.session["auth"] = ""
             self.session["started"] = False
+            
+    def show_dashboard(self):
+        print("Show dashboard...")
+            
+    def save_result(self, file_name, extension):
+        print("Saving search result...")
+        list = self.current_list
+        with open(f"{file_name}{extension}", "w", encoding="utf-8") as f:
+            pass
+        
+    def save_file_dialog(self):
+        file_dialog = QFileDialog(self)
+        self.file_name, _ = file_dialog.getSaveFileName(caption="Save File", filter="*.csv")
+        if self.file_name != "":
+            extension = ".csv" if not ".csv" in self.file_name else ""
+            self.save_result(self.file_name, extension)
             
     def set_session(self, user):
         self.session["user"] = user["username"]
@@ -219,9 +247,9 @@ class LibraryApp(QMainWindow):
         headers = [self.filter_combo.itemText(i) for i in range(1,self.filter_combo.count())]
         self.results_table.setHorizontalHeaderLabels(headers)
         
-        data = self.get_data_from_db(query)
+        self.data = self.get_data_from_db(query)
         
-        for row, column in enumerate(data):
+        for row, column in enumerate(self.data):
             for col in range(self.results_table.columnCount()):
                 self.results_table.setItem(row, col, QTableWidgetItem(str(column[col])))
                 
