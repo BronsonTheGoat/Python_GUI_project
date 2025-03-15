@@ -24,9 +24,13 @@ class DatabaseHandler:
     def fetch(self, sql_query: str, params=None) -> list[list[str|int]]:
         if params is None:
             params = []
+        elif not isinstance(params ,list) or isinstance(params, tuple):
+            params = [params]
             
         query = QSqlQuery(self.db)
         query.prepare(sql_query)
+        
+        # print(query.lastQuery(), params)
         
         for param in params:
             query.addBindValue(param)
@@ -44,6 +48,8 @@ class DatabaseHandler:
     def execute_non_query(self, query, params=None) -> None:
         if params is None:
             params = ()
+        elif not isinstance(params ,list) or isinstance(params, tuple):
+            params = [params]
             
         query = QSqlQuery(self.db)
         query.prepare(query)

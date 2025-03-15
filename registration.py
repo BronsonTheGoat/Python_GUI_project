@@ -15,16 +15,10 @@ class RegistrationDialog(QDialog):
     
     input_widgets: dict = {}
 
-    def __init__(self, parent=None) -> None:
+    def __init__(self, conn, parent=None) -> None:
         super().__init__(parent)
         
-        if create_connection("QSQLITE", "library"):
-            print("Connected succesfully.")
-            self.db = QSqlDatabase.database()
-            if not self.db.isOpen():
-                print("Database is not open!")
-        else:
-            print("Connection failed")
+        self.db = conn
         
         self.hide_icon = QPixmap(f"{self.script_directory}/assets/hidden.png")
         self.show_icon = QPixmap(f"{self.script_directory}/assets/eye.png")
@@ -105,7 +99,7 @@ class RegistrationDialog(QDialog):
         
         to_reg_form = ClickableLabel("Login")
         to_reg_form.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        to_reg_form.clicked_signal.connect(self.show_register)
+        to_reg_form.clicked_signal.connect(self.self.close())
 
         self.main_layout.addRow(self.name_input)
         self.main_layout.addRow(self.username_input)
@@ -121,7 +115,6 @@ class RegistrationDialog(QDialog):
 
     # Methods
     def create_user(self) -> None:
-        print("Query to database...")
         user: dict = {"name": self.name_input.text(),
                 "username": self.username_input.text(),
                 "password": self.password_input.text(),
@@ -130,20 +123,15 @@ class RegistrationDialog(QDialog):
                 "birth_date": self.birth_input.date().toString('yyyy-MM-dd'),
                 "authorization": "user"
                 }
-        print(user)
         
-        query = QSqlQuery(self.db)
-        sql: str = f"INSERT INTO users ({", ".join(user.keys())}) Values ({", ".join(["?" for _ in range(len(user))])})"
-        print(sql)
-        query.prepare(sql)
-        for value in user.values():
-            query.addBindValue(value)
+        query_str: str = f"INSERT INTO users ({", ".join(user.keys())}) Values ({", ".join(["?" for _ in range(len(user))])})"
             
-        if query.exec():
+        registration = self.db.execute_non_query(query_str, user.values())
+        
+        if registration:
                 print("User succesfully created")
                 QMessageBox.information(self, "User created", "Your registration was succesful.\nYou can login now.")
         else:
-            print("Error fetching users:", query.lastError().text())
             QMessageBox.warning(self, "Error", "For some reason the registration was incomplete.")
         
     def show_password(self, widget) -> None:
@@ -153,9 +141,6 @@ class RegistrationDialog(QDialog):
         else:
             widget.setEchoMode(QLineEdit.EchoMode.Normal)
             self.sender().setIcon(QIcon(self.hide_icon))
-            
-    def show_register(self) ->None:
-        self.close()
         
     def check_all_fields_filled(self, valid) -> None:
         widgets_filled: list = all(widget.text().strip() != "" and valid for i in range(self.main_layout.count()) if isinstance(widget := self.main_layout.itemAt(i).widget(), QLineEdit))

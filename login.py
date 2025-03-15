@@ -18,13 +18,6 @@ class LoginDialog(QDialog):
         super().__init__(parent)
         
         self.db = conn
-        # if create_connection("QSQLITE", "library"):
-        #     print("Connected succesfully.")
-        #     self.db = QSqlDatabase.database()
-        #     if not self.db.isOpen():
-        #         print("Database is not open!")
-        # else:
-        #     print("Connection failed")
         
         self.hide_icon = QPixmap(f"{self.script_directory}/assets/hidden.png")
         self.show_icon = QPixmap(f"{self.script_directory}/assets/eye.png")
@@ -74,7 +67,6 @@ class LoginDialog(QDialog):
         user = {"username": "", "authority": ""}
         
         records = self.db.fetch(query_str, params)
-        print(records)
         
         if not records:
             QMessageBox.warning(self, "Warning", "Non existing user or wrong password")

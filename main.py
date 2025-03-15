@@ -113,9 +113,9 @@ class LibraryApp(QMainWindow):
         self.order_by_combo.currentTextChanged.connect(self.create_filter_query)
         
         self.number_of_records = QSpinBox(self)
-        self.number_of_records.setValue(14)
+        self.number_of_records.setValue(13)
         self.number_of_records.setMinimum(1)   # default 0
-        self.number_of_records.setMaximum(100)  # default 99
+        self.number_of_records.setMaximum(200)  # default 99
         self.number_of_records.valueChanged.connect(self.create_filter_query)
         
         # Add elements to filter area
@@ -170,7 +170,6 @@ class LibraryApp(QMainWindow):
         login = LoginDialog(self.db)
         login.accepted_signal.connect(self.set_session)
         response = login.exec()
-        # print(self.session)
         
         if response:
             self.welcome_text.setText(f"Welcome {self.session["user"]}!")
@@ -179,7 +178,7 @@ class LibraryApp(QMainWindow):
             enabled: bool = False if self.session["auth"] not in ("admin", "superadmin") else True                
             self.show_hide_elements(enabled)
             self.fill_combo()
-            # self.fill_table()
+            self.fill_table()
             self.central_widget.setCurrentIndex(1)
             
         else:
@@ -204,25 +203,13 @@ class LibraryApp(QMainWindow):
             self.filter_combo.addItem(row[1])
             self.order_by_combo.addItem(row[1])
             
-    # TODO: Need to convert to new db connection
-    def get_data_from_db(self, sql_query, columns):
-        query = QSqlQuery(self.db)
-        query.prepare(sql_query)
+    def get_data_from_db(self, sql_query):
         filter_field = self.filter_combo.currentText()
         filter_text = self.search_input.text()
-        if filter_text != "" and "--" not in filter_field:
-            query.addBindValue(f'%{filter_text}%')
-        records = []
-        
-        if query.exec():
-            while query.next():
-                line = []
-                for i in range(columns):
-                    line.append(query.value(i))
-                records.append(line)                
-        else:
-            print("Error fetching books:", query.lastError().text())
-            
+        filter = f"%{filter_text}%" if filter_text != "" and "--" not in filter_field else None
+        records = self.db.fetch(sql_query, filter)
+        if filter:
+            self.number_of_records.setValue(len(records))
         return records
             
     def fill_table(self, query="SELECT * FROM books"):        
@@ -232,14 +219,14 @@ class LibraryApp(QMainWindow):
         headers = [self.filter_combo.itemText(i) for i in range(1,self.filter_combo.count())]
         self.results_table.setHorizontalHeaderLabels(headers)
         
-        data = self.get_data_from_db(query, len(headers))
+        data = self.get_data_from_db(query)
         
         for row, column in enumerate(data):
             for col in range(self.results_table.columnCount()):
                 self.results_table.setItem(row, col, QTableWidgetItem(str(column[col])))
                 
         self.results_table.cellClicked.connect(self.cell_clicked)
-        self.originalBg = self.results_table.item(0,0).background()
+        self.originalBg = self.results_table.horizontalHeaderItem(0).background()
         
     def cell_clicked(self, row):
         if row in self.selected_book.keys():
