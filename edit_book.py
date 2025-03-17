@@ -133,27 +133,26 @@ class EditBookDialog(QDialog):
                     if answer == QMessageBox.StandardButton.Apply:
                         response = QMessageBox.question(self, "Add new book", "Are you sure about to add a new book to library?")
                         if response == QMessageBox.StandardButton.Yes:
-                            print("User clicked Yes")
-                            self.add_book()
-                    else:
-                        print("User clicked No")
-                        # Just do  nothing        
+                            self.add_book() 
             case "Edit":
                 if self.check_book_modified():                
                     response = QMessageBox.question(self, "Modified data", "You modified the data of this book.\nAre you sur eto save the changes?")
                     if response == QMessageBox.StandardButton.Yes:
-                        print("User clicked yes")
                         self.edit_book()
                 else:
                     QMessageBox.information(self, "No modification", "You did'nt make any modification is the book data.\nThe previously stored vales will remain.")
         
     def add_book(self):
-        query_text: str = f"INSERT INTO book ({" ,".join([i for i in self.fields if i != "id"])}) VALUES ({", ".join(["?" for _ in range(len(self.widgets_text))])})"
+        query_text: str = f"INSERT INTO books ({" ,".join([i for i in self.fields if i != "id"])}) VALUES ({", ".join(["?" for _ in range(len(self.widgets_text))])})"
         print(query_text)
-        self.db.execute_non_query(query_text, self.widgets_text)
-        
+        inserted = self.db.execute_non_query(query_text, self.widgets_text)
+        if inserted:
+            QMessageBox.information(self, "Success", "Book inserted successfully!")
+        else:
+            QMessageBox.warning(self, "Error", "Something went wrong.")
+            
     def edit_book(self):
-        query_text: str = f"UPDATE book SET {",".join([field + ' = ?' for field in self.fields])} WHERE id = {data[0]}"
+        query_text: str = f"UPDATE books SET {",".join([field + ' = ?' for field in self.fields if field != "id"])} WHERE id = {self.data[0]}"
         edited = self.db.execute_non_query(query_text, self.widgets_text)
         if edited:
             QMessageBox.information(self, "Success", "Book updated successfully!")
@@ -172,7 +171,7 @@ if __name__ == "__main__":
         sys.exit(1)
     else:
         conn = DatabaseHandler()
-    dialog = EditBookDialog(conn,headers, "Edit", data)
+    dialog = EditBookDialog(conn, headers, "Edit", data)
     dialog.exec()
     sys.exit(1)
     app.exec()

@@ -1,4 +1,4 @@
-name, username, password, email, phone, birth_date, authorization
-Admin, Admin, password, admin@email.co, , , superadmin
-User1, user1, Password123, user@email.cc, +36207958424, ,admin
-User2, user2, passworD321, user2@mail.de, +45789455521, user
+name,username,password,email,phone,birth_date,authorization
+Admin,Admin,password,admin@email.co,,,superadmin
+User1,user1,Password123,user@email.cc,+36207958424,,admin
+User2,user2,passworD321,user2@mail.de,+45789455521,,user

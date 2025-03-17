@@ -12,7 +12,8 @@ def open_source(file):
         for row in csvreader:
             print(row)
             # insert data to database
-            insert_data(fields, row)
+            table = "book" if "data" in file else "users"
+            insert_data(table, fields, row)
 
 def create_connection():
     db = QSqlDatabase.addDatabase("QSQLITE")
@@ -25,7 +26,7 @@ def create_connection():
 
 def create_book_table():
     query = QSqlQuery()
-    query.exec("""DROP TBALE IF EXISTS book""")
+    query.exec("""DROP TBALE IF EXISTS books""")
     query.exec("""CREATE TABLE IF NOT EXISTS books (
                     id INTEGER PRIMARY KEY AUTOINCREMENT, 
                     isbn13 INTEGER NOT NULL,
@@ -54,16 +55,16 @@ def create_user_table():
                     birth_date TEXT,
                     authorization TEXT NOT NULL)""")
 
-def insert_data(fields, values):
+def insert_data(table, fields, values):
     query = QSqlQuery()
-    query.prepare(f"INSERT INTO books ({', '.join(fields)}) VALUES ({", ".join("?" for _ in range(len(values)))})")
+    query.prepare(f"INSERT INTO {table} ({', '.join(fields)}) VALUES ({", ".join("?" for _ in range(len(fields)))})")
     for value in values:
         query.addBindValue(value)
 
     if query.exec():
-        print("Book inserted successfully!")
+        print("Data inserted successfully!")
     else:
-        print("Error inserting book:", query.lastError().text())
+        print("Error inserting data:", query.lastError().text())
 
 
 app = QApplication([])

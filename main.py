@@ -315,6 +315,7 @@ class LibraryApp(QMainWindow):
                 print(f"Book deleted successfully from database... {list(self.selected_book.values())[0][0]}")
                 query_text: str = "DELETE FROM books WHERE id = ?"
                 self.db.execute_non_query(query_text, list(self.selected_book.values())[0][0])
+                self.selected_book = {}
                 self.create_filter_query()
             else:
                 print("User dcided to keep the book.")

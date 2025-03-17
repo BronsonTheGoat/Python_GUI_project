@@ -42,7 +42,7 @@ class DatabaseHandler:
                 records.append([query.value(i) for i in range(query.record().count())])
             return records
         else:
-            print("Error fetching customers:", query.lastError().text())
+            print("Error fetching table:", query.lastError().text())
             return []
 
     def execute_non_query(self, sql_query, params=None) -> None:
@@ -57,8 +57,7 @@ class DatabaseHandler:
             query.addBindValue(item)
 
         if query.exec():
-            print("Contact updated successfully!")
             return True
         else:
-            print("Error updating contact:", query.lastError().text())
+            print("Error updating item:", query.lastError().text())
             return False
