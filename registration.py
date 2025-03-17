@@ -97,7 +97,7 @@ class RegistrationDialog(QDialog):
         
         to_reg_form = ClickableLabel("Login")
         to_reg_form.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        to_reg_form.clicked_signal.connect(self.self.close())
+        to_reg_form.clicked_signal.connect(self.close)
 
         self.main_layout.addRow(self.name_input)
         self.main_layout.addRow(self.username_input)

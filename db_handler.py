@@ -45,14 +45,14 @@ class DatabaseHandler:
             print("Error fetching customers:", query.lastError().text())
             return []
 
-    def execute_non_query(self, query, params=None) -> None:
+    def execute_non_query(self, sql_query, params=None) -> None:
         if params is None:
             params = ()
         elif not isinstance(params ,list) or isinstance(params, tuple):
             params = [params]
             
         query = QSqlQuery(self.db)
-        query.prepare(query)
+        query.prepare(sql_query)
         for item in params:
             query.addBindValue(item)
 

@@ -243,6 +243,8 @@ class LibraryApp(QMainWindow):
         records = self.db.fetch(sql_query, filter)
         if filter:
             self.number_of_records.setValue(len(records))
+        else:
+            self.number_of_records.setValue(13)
         return records
             
     def fill_table(self, query="SELECT * FROM books"):        
@@ -299,7 +301,7 @@ class LibraryApp(QMainWindow):
         headers = [self.results_table.horizontalHeaderItem(c).text() for c in range(self.results_table.columnCount())]
         page = self.sender().text().split(" ")[0]
         data = list(self.selected_book.values())[0] if self.selected_book else []
-        edit_books = EditBookDialog(fields=headers, tab_name=page, data=data)
+        edit_books = EditBookDialog(self.db, fields=headers, tab_name=page, data=data)
         edit_books.exec()
         
     def delete_book(self):
@@ -311,7 +313,9 @@ class LibraryApp(QMainWindow):
                                     Are you sure about this?""", buttons)
             if user_choice == QMessageBox.StandardButton.Yes:
                 print(f"Book deleted successfully from database... {list(self.selected_book.values())[0][0]}")
-                self.fill_table()
+                query_text: str = "DELETE FROM books WHERE id = ?"
+                self.db.execute_non_query(query_text, list(self.selected_book.values())[0][0])
+                self.create_filter_query()
             else:
                 print("User dcided to keep the book.")
         else:

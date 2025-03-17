@@ -5,7 +5,7 @@ from PyQt6.QtSql import QSqlDatabase, QSqlQuery
 script_directory = os.path.dirname(os.path.abspath(sys.argv[0]))
 
 def open_source(file):
-    with open(f, "r", encoding="utf-8") as f:
+    with open(file, "r", encoding="utf-8") as f:
         csvreader = csv.reader(f)
         fields = next(csvreader)
         print(fields)
@@ -71,8 +71,8 @@ if create_connection():
     print("Database connected successfully!")
     create_user_table()
     open_source(f"{script_directory}/assets/users.csv")
-    create_book_table()
-    open_source(f"{script_directory}/assets/books_dataset/data.csv")
+    # create_book_table()
+    # open_source(f"{script_directory}/assets/books_dataset/data.csv")
 
     sys.exit()
 
