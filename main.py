@@ -8,6 +8,7 @@ from PyQt6.QtGui import QAction, QIcon, QPixmap, QColor
 from PyQt6.QtCore import QSize, Qt, QTimer, QDateTime
 from db_handler import DatabaseHandler
 from login import LoginDialog
+from dashboard import DashboardDialog
 from edit_book import EditBookDialog
 import os
 import sys
@@ -29,6 +30,7 @@ class LibraryApp(QMainWindow):
             print("Database is not open!")
         
         self.initUi()
+        QTimer.singleShot(200, self.login)
     
     # Methods
     def initUi(self) -> None:
@@ -204,7 +206,8 @@ class LibraryApp(QMainWindow):
             self.session["started"] = False
             
     def show_dashboard(self):
-        print("Show dashboard...")
+        dashboard = DashboardDialog(self.db)
+        dashboard.exec()
         
     def save_file_dialog(self):
         file_dialog = QFileDialog(self)
