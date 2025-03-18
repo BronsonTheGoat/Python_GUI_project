@@ -158,9 +158,6 @@ class EditBookDialog(QDialog):
             QMessageBox.information(self, "Success", "Book updated successfully!")
         else:
             QMessageBox.warning(self, "Error", "Something went wrong.")
-        
-        # get field names and field values
-        # TODO: INSERT adn UPDATE need to be implemented
 
 if __name__ == "__main__":
     app = QApplication([])

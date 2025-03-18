@@ -11,6 +11,7 @@ from login import LoginDialog
 from edit_book import EditBookDialog
 import os
 import sys
+import csv
 
 class LibraryApp(QMainWindow):
     def __init__(self, conn) -> None:
@@ -58,7 +59,7 @@ class LibraryApp(QMainWindow):
         self.save_menu = self.menubar.addMenu("Save")
         self.save_action = QAction("Save", self)
         self.save_action.setShortcut("Ctrl+S")
-        self.save_action.triggered.connect(self.save_result)
+        self.save_action.triggered.connect(self.save_file_dialog)
         self.save_action.setVisible(False)
 
         self.file_menu.addAction(self.login_action)
@@ -191,9 +192,8 @@ class LibraryApp(QMainWindow):
             self.welcome_text.setText(f"Welcome {self.session["user"]}!")
             self.login_action.setVisible(False)
             self.logout_action.setVisible(True)
-            self.save_action.setVisible(True)
-            enabled: bool = False if self.session["auth"] not in ("admin", "superadmin") else True                
-            self.show_hide_elements(enabled)
+            self.save_action.setVisible(True)                
+            self.show_hide_elements()
             self.fill_combo()
             self.fill_table()
             self.central_widget.setCurrentIndex(1)
@@ -205,12 +205,6 @@ class LibraryApp(QMainWindow):
             
     def show_dashboard(self):
         print("Show dashboard...")
-            
-    def save_result(self, file_name, extension):
-        print("Saving search result...")
-        list = self.current_list
-        with open(f"{file_name}{extension}", "w", encoding="utf-8") as f:
-            pass
         
     def save_file_dialog(self):
         file_dialog = QFileDialog(self)
@@ -219,14 +213,34 @@ class LibraryApp(QMainWindow):
             extension = ".csv" if not ".csv" in self.file_name else ""
             self.save_result(self.file_name, extension)
             
+    def save_result(self, file_name, extension):
+        print("Saving search result...")
+        list, headers = self.current_list()
+        with open(f"{file_name}{extension}", "w", encoding="utf-8") as f:
+            writer = csv.DictWriter(f, fieldnames=headers)
+            writer.writeheader()
+            writer.writerows(list)
+            
+    def current_list(self) -> list[dict[str:str]]:        
+        field_names: list[str] =  [self.filter_combo.itemText(i) for i in range(1,self.filter_combo.count())]
+        search_result: list[dict[str:str]] = []
+        for i in range(self.results_table.rowCount()):
+            row = {field_names[column]:self.results_table.item(i, column).text() for column in range(1,self.results_table.columnCount())}
+            search_result.append(row)
+            row = {}
+        return search_result, field_names
+            
     def set_session(self, user):
         self.session["user"] = user["username"]
         self.session["auth"] = user["authority"]
         self.session["started"] = True
         
-    def show_hide_elements(self, enabled):
-        self.dashboard_action.setVisible(enabled)
-        self.edit_area.setVisible(enabled)
+    def show_hide_elements(self):
+        enabled: dict[str,list[str]] = {"user": [False, False],
+                                        "admin": [True, False],
+                                        "superadmin": [True, True]}
+        self.edit_area.setVisible(enabled.get(self.session["auth"])[0])        
+        self.dashboard_action.setVisible(enabled.get(self.session["auth"])[1])
         
         
     def fill_combo(self):
