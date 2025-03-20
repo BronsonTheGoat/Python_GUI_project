@@ -206,7 +206,7 @@ class LibraryApp(QMainWindow):
             self.session["started"] = False
             
     def show_dashboard(self):
-        dashboard = DashboardDialog(self.db)
+        dashboard = DashboardDialog(self.db, self.session)
         dashboard.exec()
         
     def save_file_dialog(self):

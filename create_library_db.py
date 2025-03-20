@@ -44,7 +44,7 @@ def create_book_table():
     
 def create_user_table():
     query = QSqlQuery()
-    query.exec("""DROP TBALE IF EXISTS users""")
+    query.exec("""DROP TABLE IF EXISTS users""")
     query.exec("""CREATE TABLE IF NOT EXISTS users (
                     id INTEGER PRIMARY KEY AUTOINCREMENT, 
                     name INTEGER NOT NULL,
