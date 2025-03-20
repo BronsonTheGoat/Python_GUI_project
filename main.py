@@ -120,6 +120,11 @@ class LibraryApp(QMainWindow):
         # TODO: add more option to filter the results
         self.filter_area = QHBoxLayout()
         
+        self.filter_lines = QVBoxLayout()
+        
+        self.filter_line_fields = QHBoxLayout()
+        self.filters = [self.filter_line_fields]
+        
         self.search_input = QLineEdit()
         self.search_input.setPlaceholderText("Type to filter...")
         self.search_input.textChanged.connect(self.create_filter_query)
@@ -127,6 +132,10 @@ class LibraryApp(QMainWindow):
         self.filter_combo = QComboBox()
         self.filter_combo.addItem("Filter by --")
         self.filter_combo.currentTextChanged.connect(self.create_filter_query)
+        
+        self.add_filter_button = QPushButton()
+        self.add_filter_button.setText("Add filter")
+        self.add_filter_button.clicked.connect(self.add_filter)
         
         self.order_by_combo = QComboBox()
         self.order_by_combo.addItem("Order by --")
@@ -139,8 +148,11 @@ class LibraryApp(QMainWindow):
         self.number_of_records.valueChanged.connect(self.create_filter_query)
         
         # Add elements to filter area
-        self.filter_area.addWidget(self.search_input)
-        self.filter_area.addWidget(self.filter_combo)
+        self.filter_line_fields.addWidget(self.search_input)
+        self.filter_line_fields.addWidget(self.filter_combo)
+        self.filter_line_fields.addWidget(self.add_filter_button)
+        self.filter_lines.addLayout(self.filter_line_fields)
+        self.filter_area.addLayout(self.filter_lines)
         self.filter_area.addWidget(self.order_by_combo)
         self.filter_area.addWidget(QLabel("Shown results: "))
         self.filter_area.addWidget(self.number_of_records)
@@ -248,8 +260,8 @@ class LibraryApp(QMainWindow):
         
     def fill_combo(self):
         query_txt = "PRAGMA table_info (books)"
-        records = self.db.fetch(query_txt)
-        for row in records:
+        self.headers = self.db.fetch(query_txt)
+        for row in self.headers:
             self.filter_combo.addItem(row[1])
             self.order_by_combo.addItem(row[1])
             
@@ -339,6 +351,33 @@ class LibraryApp(QMainWindow):
         else:
             QMessageBox.information(self, "No book selected", "Please select a book to perform this action!")
     
+    def add_filter(self):
+        filter_line_fields = QHBoxLayout()
+                
+        search_input = QLineEdit()
+        search_input.setPlaceholderText("Type to filter...")
+        # search_input.textChanged.connect(self.create_filter_query)
+        
+        filter_combo = QComboBox()
+        filter_combo.addItem("Filter by --")
+        # TODO: need to inactivate all the items which are already in use and need to mxaimize No of filters
+        for row in self.headers:
+            filter_combo.addItem(row[1])
+        # filter_combo.currentTextChanged.connect(self.create_filter_query)
+        
+        add_filter_button = QPushButton()
+        add_filter_button.setText("Remove filter")
+        add_filter_button.clicked.connect(self.remove_filter)
+        
+        filter_line_fields.addWidget(search_input)
+        filter_line_fields.addWidget(filter_combo)
+        filter_line_fields.addWidget(add_filter_button)
+        self.filter_lines.addLayout(filter_line_fields)
+        self.filters.append(filter_line_fields)
+    
+    def remove_filter(self):
+        print(self.sender())
+        # raise NotImplementedError("remove_filter is not implemented!")
     
 if __name__ == "__main__":
     app = QApplication([])
