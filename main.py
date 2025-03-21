@@ -352,32 +352,41 @@ class LibraryApp(QMainWindow):
             QMessageBox.information(self, "No book selected", "Please select a book to perform this action!")
     
     def add_filter(self):
-        filter_line_fields = QHBoxLayout()
-                
-        search_input = QLineEdit()
-        search_input.setPlaceholderText("Type to filter...")
-        # search_input.textChanged.connect(self.create_filter_query)
-        
-        filter_combo = QComboBox()
-        filter_combo.addItem("Filter by --")
-        # TODO: need to inactivate all the items which are already in use and need to mxaimize No of filters
-        for row in self.headers:
-            filter_combo.addItem(row[1])
-        # filter_combo.currentTextChanged.connect(self.create_filter_query)
-        
-        add_filter_button = QPushButton()
-        add_filter_button.setText("Remove filter")
-        add_filter_button.clicked.connect(self.remove_filter)
-        
-        filter_line_fields.addWidget(search_input)
-        filter_line_fields.addWidget(filter_combo)
-        filter_line_fields.addWidget(add_filter_button)
-        self.filter_lines.addLayout(filter_line_fields)
-        self.filters.append(filter_line_fields)
+        if len(self.filters) < 4:
+            filter_line_fields = QHBoxLayout()
+                    
+            search_input = QLineEdit()
+            search_input.setPlaceholderText("Type to filter...")
+            # search_input.textChanged.connect(self.create_filter_query)
+            
+            filter_combo = QComboBox()
+            filter_combo.addItem("Filter by --")
+            # TODO: need to inactivate all the items which are already in use and need to mxaimize No of filters
+            for row in self.headers:
+                filter_combo.addItem(row[1])
+            # filter_combo.currentTextChanged.connect(self.create_filter_query)
+            
+            add_filter_button = QPushButton()
+            add_filter_button.setText("Remove filter")
+            add_filter_button.clicked.connect(self.remove_filter)
+            
+            filter_line_fields.addWidget(search_input)
+            filter_line_fields.addWidget(filter_combo)
+            filter_line_fields.addWidget(add_filter_button)
+            self.filter_lines.addLayout(filter_line_fields)
+            self.filters.append(filter_line_fields)
+        else:
+            QMessageBox.information(self, "Filters limited", "You can not add more filters")
     
-    def remove_filter(self):
+    def remove_filter(self) -> None:
         print(self.sender())
-        # raise NotImplementedError("remove_filter is not implemented!")
+        layout: list = self.filter_lines.children() #self.sender().parent().layout().children()[1].layout().children()[0].layout().children()
+        for item in layout:
+            if item.itemAt(2).widget() == self.sender():
+                for i in reversed(range(item.count())): 
+                    item.itemAt(i).widget().setParent(None)
+                self.filter_lines.removeItem(item)
+                self.filters.remove(item)
     
 if __name__ == "__main__":
     app = QApplication([])
