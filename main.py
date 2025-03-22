@@ -313,17 +313,24 @@ class LibraryApp(QMainWindow):
         for j in range(self.results_table.columnCount()):
             self.results_table.item(rowIndex, j).setBackground(color)
     
-    def create_filter_query(self):   
-        # collect all filter key, value
+    def create_filter_query(self):
         order_by = "id" if "--" in self.order_by_combo.currentText() else self.order_by_combo.currentText()
         query = "SELECT * FROM books"
         layout: list = self.filter_lines.children()
         filters = {}
         for item in layout:
+            combo = item.itemAt(1).widget()
             filter_text = item.itemAt(0).widget().text()
-            filter_field_name = item.itemAt(1).widget().currentText()
+            filter_field_name = combo.currentText()
             if not "--" in filter_field_name and filter_text != "":
                 filters[filter_field_name] = filter_text
+                
+            # Set selected items inactive in the other comboboxes
+            # if combo != self.sender() and not "--" in self.sender().currentText():
+            #     combo.setItemData(self.sender().currentIndex(), Qt.ItemFlag.ItemIsEnabled, Qt.ItemDataRole.UserRole - 1)
+            # else:
+            #     combo.setItemData(self.sender().currentIndex(), 0, Qt.ItemDataRole.UserRole - 1)
+                
         if  filters:
             query += f" WHERE {' AND '.join([field_name + ' LIKE ? ' for field_name in filters.keys()])} ORDER BY {order_by}"
             print(query)
