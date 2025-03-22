@@ -265,10 +265,14 @@ class LibraryApp(QMainWindow):
             self.filter_combo.addItem(row[1])
             self.order_by_combo.addItem(row[1])
             
-    def get_data_from_db(self, sql_query):
-        filter_field = self.filter_combo.currentText()
-        filter_text = self.search_input.text()
-        filter = f"%{filter_text}%" if filter_text != "" and "--" not in filter_field else None
+    def get_data_from_db(self, sql_query, params = None):
+        # filter_field = self.filter_combo.currentText()
+        # filter_text = self.search_input.text()
+        # filter = f"%{filter_text}%" if filter_text != "" and "--" not in filter_field else None
+        if params:
+            filter = [f"%{filter_text}%" for filter_text in params]
+        else:
+            filter = params
         records = self.db.fetch(sql_query, filter)
         if filter:
             self.number_of_records.setValue(len(records))
@@ -276,14 +280,14 @@ class LibraryApp(QMainWindow):
             self.number_of_records.setValue(13)
         return records
             
-    def fill_table(self, query="SELECT * FROM books"):        
+    def fill_table(self, query="SELECT * FROM books", params = None):        
         self.results_table.setRowCount(self.number_of_records.value())
         self.results_table.setColumnCount(self.filter_combo.count()-1)
         
         headers = [self.filter_combo.itemText(i) for i in range(1,self.filter_combo.count())]
         self.results_table.setHorizontalHeaderLabels(headers)
         
-        self.data = self.get_data_from_db(query)
+        self.data = self.get_data_from_db(query, params)
         
         for row, column in enumerate(self.data):
             for col in range(self.results_table.columnCount()):
@@ -309,16 +313,25 @@ class LibraryApp(QMainWindow):
         for j in range(self.results_table.columnCount()):
             self.results_table.item(rowIndex, j).setBackground(color)
     
-    def create_filter_query(self):        
+    def create_filter_query(self):   
+        # collect all filter key, value
         order_by = "id" if "--" in self.order_by_combo.currentText() else self.order_by_combo.currentText()
         query = "SELECT * FROM books"
-        if not "--" in self.filter_combo.currentText() and self.search_input.text() != "":
-            query += f" WHERE {self.filter_combo.currentText()} LIKE ? ORDER BY {order_by}"
+        layout: list = self.filter_lines.children()
+        filters = {}
+        for item in layout:
+            filter_text = item.itemAt(0).widget().text()
+            filter_field_name = item.itemAt(1).widget().currentText()
+            if not "--" in filter_field_name and filter_text != "":
+                filters[filter_field_name] = filter_text
+        if  filters:
+            query += f" WHERE {' AND '.join([field_name + ' LIKE ? ' for field_name in filters.keys()])} ORDER BY {order_by}"
+            print(query)
         else:
             query += f" ORDER BY {order_by}"
         
         self.results_table.clear()
-        self.fill_table(query)
+        self.fill_table(query, filters.values() if filters != {} else None)
         
     def logout(self):
         self.central_widget.setCurrentIndex(0)
@@ -357,14 +370,14 @@ class LibraryApp(QMainWindow):
                     
             search_input = QLineEdit()
             search_input.setPlaceholderText("Type to filter...")
-            # search_input.textChanged.connect(self.create_filter_query)
+            search_input.textChanged.connect(self.create_filter_query)
             
             filter_combo = QComboBox()
             filter_combo.addItem("Filter by --")
             # TODO: need to inactivate all the items which are already in use and need to mxaimize No of filters
             for row in self.headers:
                 filter_combo.addItem(row[1])
-            # filter_combo.currentTextChanged.connect(self.create_filter_query)
+            filter_combo.currentTextChanged.connect(self.create_filter_query)
             
             add_filter_button = QPushButton()
             add_filter_button.setText("Remove filter")
