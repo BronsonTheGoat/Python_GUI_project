@@ -40,11 +40,26 @@ class EditBookDialog(QDialog):
         self.set_default_tab(tab_name)
         
     def set_default_tab(self, tab_name: str) -> int:
+        """
+        Sets the default tab based on the given parameter.
+
+        Args:
+            tab_name (str): The name of the tab comes from the caller (button).
+
+        Returns:
+            int: The number of the required tab.
+        """
         tab_functions: dict[str, int] = {"Add": 0,
                                 "Edit": 1}
         return tab_functions.get(tab_name)
         
     def setup_tab(self, i: int) -> None:
+        """
+        Create the tab layout and add widgets.
+
+        Args:
+            i (int): The No. of the tab setting up.
+        """
         tab = self.tabs.widget(i)
         
         btn_text = self.tabs.tabText(i).split(" ")[0]
@@ -68,7 +83,10 @@ class EditBookDialog(QDialog):
         layout.addRow(button)
         tab.setLayout(layout)
         
-    def property_modified(self):
+    def property_modified(self) -> None:
+        """
+        Collects the data from the input fields if any ofthe mis modified.
+        """
         # print(self.sender().parent().layout().count())
         parent_widget: int = self.sender().parent().layout()
         self.widgets_text = [widget.text() for i in range(parent_widget.count()) if isinstance(widget := parent_widget.itemAt(i).widget(), QLineEdit)]
@@ -76,7 +94,14 @@ class EditBookDialog(QDialog):
         index = self.widgets_text.index(self.sender().text())
         self.validate_field(self.sender(), index)
     
-    def validate_field(self, widget, i):
+    def validate_field(self, widget: QLineEdit, i: int) -> None:
+        """
+        Validates the edited widget.
+
+        Args:
+            widget (QLineEdit): The widget which wanted to be validated.
+            i (int): Index of the correxponding label.
+        """
         isbn_13_regex = QRegularExpression(r"[0-9]{13}")
         isbn_10_regex = QRegularExpression(r"([0-9]){9,10}(?:[A-Z]?$)")
         thumbnail_regex = QRegularExpression(r"/^https?:\/\/(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/=]*)$/")
@@ -96,25 +121,51 @@ class EditBookDialog(QDialog):
             validator = QRegularExpressionValidator(validators.get(self.lables_text[i]), widget)
             widget.setValidator(validator)
             self.validate_input(widget)
-        else:
-            return
         
-    def validate_input(self, widget) -> None:
+    def validate_input(self, widget: QLineEdit) -> None:
+        """
+        Checks if the given widget has acceptable input.
+
+        Args:
+            widget (QlineEdit): Returns True if the value is acceptable.
+        """
         valid = widget.hasAcceptableInput()
         self.set_input_valid(valid, widget)
         
-    def set_input_valid(self, is_valid: bool, widget) -> None:
+    def set_input_valid(self, is_valid: bool, widget: QLineEdit) -> None:
+        """
+        Changes the input color based on the validtion.
+
+        Args:
+            is_valid (bool): True if the input has valid, acceptable value.
+            widget (QLineEdit): The widget which wanted to be change th ecolor.
+        """
         if is_valid:
             widget.setStyleSheet("background-color: green;")
         else:
             widget.setStyleSheet("background-color: red;")
     
-    def check_empty_fields(self,sender):
+    def check_empty_fields(self, sender) -> bool:
+        """
+        Checks if there's any empty field.
+
+        Args:
+            sender (_type_): The widget for getting the parent layout.
+
+        Returns:
+            bool: Returns True if all input fields are filled.
+        """
         parent_widget_count: int = sender.parent().layout().count()
         all_filled: bool = all(widget.text().strip() for i in range(parent_widget_count) if isinstance(widget := self.sender().parent().layout().itemAt(i).widget(), QLineEdit))
         return all_filled
 
-    def check_book_modified(self):
+    def check_book_modified(self) -> bool:
+        """
+        Check if any data of the book is modified. Only in edit mode.
+
+        Returns:
+            bool: Retursn True if any data is different from the original fetched from database.
+        """
         if self.widgets_text != []:
             for original, modified in zip(self.data, self.widgets_text):
                 if original != modified:
@@ -123,7 +174,10 @@ class EditBookDialog(QDialog):
         else:
             return False
         
-    def perform_action(self):
+    def perform_action(self) ->None:
+        """
+        Executes add or edit action after user accept.
+        """
         action: str = self.sender().text()
         match action:
             case "Add":
@@ -142,7 +196,10 @@ class EditBookDialog(QDialog):
                 else:
                     QMessageBox.information(self, "No modification", "You did'nt make any modification is the book data.\nThe previously stored vales will remain.")
         
-    def add_book(self):
+    def add_book(self) -> None:
+        """
+        Add a book to the database and give feedback in messagebox.
+        """
         query_text: str = f"INSERT INTO books ({" ,".join([i for i in self.fields if i != "id"])}) VALUES ({", ".join(["?" for _ in range(len(self.widgets_text))])})"
         print(query_text)
         inserted = self.db.execute_non_query(query_text, self.widgets_text)
@@ -151,7 +208,10 @@ class EditBookDialog(QDialog):
         else:
             QMessageBox.warning(self, "Error", "Something went wrong.")
             
-    def edit_book(self):
+    def edit_book(self) -> None:
+        """
+        Update the information of the book previously selected from main and gives feedback in messagebox.
+        """
         query_text: str = f"UPDATE books SET {",".join([field + ' = ?' for field in self.fields if field != "id"])} WHERE id = {self.data[0]}"
         edited = self.db.execute_non_query(query_text, self.widgets_text)
         if edited:

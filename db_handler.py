@@ -15,13 +15,35 @@ class DatabaseHandler:
             cls._instance.db.open()
         return cls._instance
     
-    def get_db(self):
+    def get_db(self) -> QSqlDatabase:
+        """
+        Returns the 
+
+        Returns:
+            QSqlDatabase: _description_
+        """
         return self.db
     
-    def is_connected(self):
+    def is_connected(self) -> bool:
+        """
+        Checks if the database is opened.
+
+        Returns:
+            bool: Returns True if the database is opened.
+        """
         return self.db.isOpen()
 
     def fetch(self, sql_query: str, params=None) -> list[list[str|int]]:
+        """
+        Fetch data from the database.
+
+        Args:
+            sql_query (str): SQL query string
+            params (list|tuple, optional): Parameters which will be binded. Defaults to None.
+
+        Returns:
+            list[list[str|int]]: The returned records from the databse.
+        """
         if params is None:
             params = []
         elif not isinstance(params ,list) or isinstance(params, tuple):
@@ -45,7 +67,17 @@ class DatabaseHandler:
             print("Error fetching table:", query.lastError().text())
             return []
 
-    def execute_non_query(self, sql_query, params=None) -> None:
+    def execute_non_query(self, sql_query: str, params=None) -> bool:
+        """
+        Executes Insert, Delete, Update queries.
+
+        Args:
+            sql_query (str): SQL query text.
+            params (list|tuple, optional): Parameters which will be binded. Defaults to None.
+
+        Returns:
+            bool: Returns True if the qery executed succesfully.
+        """
         if params is None:
             params = ()
         elif not isinstance(params ,list) or isinstance(params, tuple):

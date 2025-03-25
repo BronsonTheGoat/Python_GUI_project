@@ -113,6 +113,9 @@ class RegistrationDialog(QDialog):
 
     # Methods
     def create_user(self) -> None:
+        """
+        Create a new record in the database with the entered values.
+        """
         user: dict = {"name": self.name_input.text(),
                 "username": self.username_input.text(),
                 "password": self.password_input.text(),
@@ -133,6 +136,12 @@ class RegistrationDialog(QDialog):
             QMessageBox.warning(self, "Error", "For some reason the registration was incomplete.")
         
     def show_password(self, widget) -> None:
+        """
+        Changes the password field behaviour to text or back to password (***).
+
+        Args:
+            widget (QWidget|QLineEdit): The widget which is connected to the pressed button.
+        """
         if widget.echoMode() == QLineEdit.EchoMode.Normal:
             widget.setEchoMode(QLineEdit.EchoMode.Password)
             self.sender().setIcon(QIcon(self.show_icon))
@@ -140,14 +149,33 @@ class RegistrationDialog(QDialog):
             widget.setEchoMode(QLineEdit.EchoMode.Normal)
             self.sender().setIcon(QIcon(self.hide_icon))
         
-    def check_all_fields_filled(self, valid) -> None:
+    def check_all_fields_filled(self, valid: bool) -> None:
+        """
+        Checks all the input fields and if everything is filled then enables the submit (registration) button .
+
+        Args:
+            valid (bool): A boolean value. True if the corresponding input field has valid value inside.
+        """
         widgets_filled: list = all(widget.text().strip() != "" and valid for i in range(self.main_layout.count()) if isinstance(widget := self.main_layout.itemAt(i).widget(), QLineEdit))
         self.registration_button.setEnabled(widgets_filled)
         
     def password_match(self) -> bool:
+        """
+        Checks if both the password inputs contains the exact same values.
+
+        Returns:
+            bool: Returns True if the passwords are identical.
+        """
         return self.password_input.text() == self.password_2_input.text()
         
     def validate_input(self, widget, is_password=False) -> None:
+        """
+        Validating the given input widget's value.
+
+        Args:
+            widget (QLineEdit): An input widget which value is wanted to be validated.
+            is_password (bool, optional): Must be true if the widget is holding password. Defaults to False.
+        """
         if is_password:
             valid: bool = self.password_match() and widget.hasAcceptableInput()
         else:
@@ -156,6 +184,13 @@ class RegistrationDialog(QDialog):
         self.check_all_fields_filled(valid)            
         
     def set_input_valid(self, is_valid: bool, widget) -> None:
+        """
+        Changes the color of the input field if that has an acceptable value.
+
+        Args:
+            is_valid (bool): Bool value from evaluation.
+            widget (QLineEdit): The field which color need to be changed.
+        """
         palette = widget.palette()
         if is_valid:
             palette.setColor(QPalette.ColorRole.Base, QColor(220, 255, 220))

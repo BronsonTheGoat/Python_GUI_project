@@ -57,6 +57,12 @@ class LoginDialog(QDialog):
 
     # Methods
     def login_user(self) -> list:
+        """
+        Fetch the data from the database if username and passsword are matching.
+
+        Returns:
+            list: Contains username and authority.
+        """
         if self.username_input.text() == "" or self.password_input.text() == "":
             QMessageBox.information(self, "Empty fields", "Username or password field is empty!")
             return []
@@ -77,9 +83,21 @@ class LoginDialog(QDialog):
             self.accept()
         
     def hash_password(password: str) -> str:
+        """
+        Returns a hashed value of the enterd password.
+
+        Args:
+            password (str): The password enterd by the user.
+
+        Returns:
+            str: Hashed value of the password.
+        """
         return hashlib.sha256(password.encode()).hexdigest()
         
     def show_password(self) -> None:
+        """
+        Changes the password field behaviour to text or back to password (***).
+        """
         if self.password_input.echoMode() == QLineEdit.EchoMode.Normal:
             self.password_input.setEchoMode(QLineEdit.EchoMode.Password)
             self.show_password_button.setIcon(QIcon(self.show_icon))
@@ -88,6 +106,9 @@ class LoginDialog(QDialog):
             self.show_password_button.setIcon(QIcon(self.hide_icon))
             
     def show_register(self):
+        """
+        Opens the registration dialog.
+        """
         print("Go to registration form")
         registration = RegistrationDialog(self.db)
         registration.exec()
